@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - CURATOR</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300,0&display=swap" rel="stylesheet">
+    <script>
+        if (sessionStorage.getItem('isAdmin') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9f9; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    </style>
+</head>
+<body class="text-gray-900 bg-gray-50 flex flex-col min-h-screen">
+
+    <header class="bg-white border-b border-gray-200 px-8 py-6 sticky top-0 z-50 flex items-center justify-between">
+        <div class="flex items-center gap-6">
+            <a href="admin.html?module=inventory" class="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-black transition-colors uppercase tracking-widest">
+                <span class="material-symbols-outlined text-lg">arrow_back</span>
+                Back to Inventory
+            </a>
+        </div>
+        <div>
+            <span class="text-xl font-extrabold tracking-tighter"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 72" class="h-6 w-auto fill-current"><path d="M247.78 14.7186C247.78 17.8333 247.119 20.6066 245.796 23.0386C244.473 25.4279 242.596 27.3693 240.164 28.8626C241.359 29.7159 242.468 30.7826 243.492 32.0626C244.559 33.3426 245.604 34.8786 246.628 36.6706L251.684 45.4386H243.556L239.524 38.4626C238.799 37.2253 238.073 36.2013 237.348 35.3906C236.665 34.5373 235.919 33.8546 235.108 33.3426C234.297 32.8306 233.401 32.4679 232.42 32.2546C231.439 32.0413 230.308 31.9346 229.028 31.9346H228.708V45.4386H221.668V2.55859H228.708V25.0226H229.348C232.975 25.0226 235.769 24.1266 237.732 22.3346C239.737 20.4999 240.74 17.9613 240.74 14.7186H247.78Z"/><path d="M200.953 21.1201C199.673 21.1201 198.478 21.3547 197.369 21.8241C196.302 22.2507 195.364 22.8694 194.553 23.6801C193.785 24.4907 193.166 25.4507 192.697 26.5601C192.228 27.6267 191.993 28.8001 191.993 30.0801C191.993 31.3601 192.228 32.5547 192.697 33.6641C193.166 34.7307 193.785 35.6694 194.553 36.4801C195.364 37.2481 196.302 37.8667 197.369 38.3361C198.478 38.8054 199.673 39.0401 200.953 39.0401C202.873 39.0401 204.558 38.5494 206.009 37.5681C207.502 36.5867 208.569 35.2641 209.209 33.6001H216.569C216.185 35.4347 215.502 37.1201 214.521 38.6561C213.582 40.1921 212.43 41.5147 211.065 42.6241C209.7 43.6907 208.142 44.5441 206.393 45.1841C204.686 45.7814 202.873 46.0801 200.953 46.0801C198.734 46.0801 196.644 45.6747 194.681 44.8641C192.718 44.0107 191.012 42.8801 189.561 41.4721C188.153 40.0214 187.022 38.3147 186.169 36.3521C185.358 34.3894 184.953 32.2987 184.953 30.0801C184.953 27.8187 185.358 25.7281 186.169 23.8081C187.022 21.8454 188.153 20.1387 189.561 18.6881C191.012 17.2374 192.718 16.1067 194.681 15.2961C196.644 14.4854 198.734 14.0801 200.953 14.0801C202.873 14.0801 204.686 14.4001 206.393 15.0401C208.142 15.6374 209.7 16.4907 211.065 17.6001C212.43 18.6667 213.582 19.9681 214.521 21.5041C215.502 23.0401 216.185 24.7254 216.569 26.5601H209.209C208.569 24.8961 207.502 23.5734 206.009 22.5921C204.558 21.6107 202.873 21.1201 200.953 21.1201Z"/><path d="M176.312 0C177.592 0 178.659 0.426666 179.512 1.28C180.365 2.13333 180.792 3.2 180.792 4.48C180.792 5.76 180.365 6.82667 179.512 7.68C178.659 8.53333 177.592 8.96 176.312 8.96C175.032 8.96 173.965 8.53333 173.112 7.68C172.259 6.82667 171.832 5.76 171.832 4.48C171.832 3.2 172.259 2.13333 173.112 1.28C173.965 0.426666 175.032 0 176.312 0ZM172.792 14.72H179.832V45.44H172.792V14.72Z"/><path d="M167.38 16.7026C167.38 18.8786 166.996 20.8413 166.228 22.5906C165.503 24.2973 164.457 25.7693 163.092 27.0066C161.727 28.2439 160.063 29.2039 158.1 29.8866C156.18 30.5266 154.004 30.8466 151.572 30.8466H142.676V45.4386H134.996V2.55859H151.572C154.004 2.55859 156.18 2.89993 158.1 3.58259C160.063 4.22259 161.727 5.16126 163.092 6.39859C164.457 7.63593 165.503 9.12926 166.228 10.8786C166.996 12.5853 167.38 14.5266 167.38 16.7026ZM159.7 16.7026C159.7 14.5266 158.975 12.7986 157.524 11.5186C156.073 10.2386 154.089 9.59859 151.572 9.59859H142.676V23.8066H151.572C154.004 23.8066 155.967 23.1879 157.46 21.9506C158.953 20.6706 159.7 18.9213 159.7 16.7026Z"/><path d="M97.5156 30.0801C97.5156 27.7761 97.8996 25.6427 98.6676 23.6801C99.4783 21.7174 100.588 20.0321 101.996 18.6241C103.404 17.1734 105.068 16.0641 106.988 15.2961C108.95 14.4854 111.084 14.0801 113.388 14.0801C115.692 14.0801 117.804 14.4854 119.724 15.2961C121.686 16.0641 123.372 17.1734 124.78 18.6241C126.188 20.0321 127.276 21.7174 128.044 23.6801C128.854 25.6427 129.26 27.7761 129.26 30.0801C129.26 30.3787 129.238 30.6774 129.196 30.9761C129.196 31.2321 129.153 31.5734 129.068 32.0001H104.684C105.068 34.1761 106.006 35.9041 107.5 37.1841C109.036 38.4214 110.998 39.0401 113.388 39.0401C115.009 39.0401 116.438 38.7414 117.676 38.1441C118.956 37.5467 119.98 36.6721 120.748 35.5201H128.428C127.916 37.1414 127.19 38.6134 126.252 39.9361C125.313 41.2161 124.182 42.3254 122.86 43.2641C121.58 44.1601 120.129 44.8641 118.508 45.3761C116.929 45.8454 115.222 46.0801 113.388 46.0801C111.084 46.0801 108.95 45.6961 106.988 44.9281C105.068 44.1174 103.404 43.0081 101.996 41.6001C100.588 40.1921 99.4783 38.5067 98.6676 36.5441C97.8996 34.5814 97.5156 32.4267 97.5156 30.0801ZM121.772 26.8801C121.174 25.0881 120.15 23.6801 118.7 22.6561C117.249 21.6321 115.478 21.1201 113.388 21.1201C111.254 21.1201 109.462 21.6321 108.012 22.6561C106.561 23.6801 105.558 25.0881 105.004 26.8801H121.772Z"/><path d="M69.333 2.55859V17.2146C70.613 16.2333 72.021 15.4653 73.557 14.9106C75.093 14.3559 76.757 14.0786 78.549 14.0786C80.6823 14.0786 82.6663 14.4839 84.501 15.2946C86.3356 16.1053 87.9143 17.2146 89.237 18.6226C90.6023 20.0306 91.669 21.6946 92.437 23.6146C93.2476 25.5346 93.653 27.5826 93.653 29.7586C93.653 31.9773 93.2476 34.0466 92.437 35.9666C91.6263 37.8439 90.517 39.4866 89.109 40.8946C87.701 42.3026 86.037 43.4119 84.117 44.2226C82.197 45.0333 80.149 45.4386 77.973 45.4386H52.293V38.3986H77.973C79.1676 38.3986 80.277 38.1853 81.301 37.7586C82.3676 37.2893 83.285 36.6706 84.053 35.9026C84.8636 35.1346 85.4823 34.2173 85.909 33.1506C86.3783 32.0839 86.613 30.9533 86.613 29.7586C86.613 28.5213 86.3783 27.3906 85.909 26.3666C85.4823 25.2999 84.8636 24.3826 84.053 23.6146C83.285 22.8466 82.3676 22.2493 81.301 21.8226C80.277 21.3533 79.1676 21.1186 77.973 21.1186C76.7356 21.1186 75.5836 21.3533 74.517 21.8226C73.493 22.2493 72.597 22.8466 71.829 23.6146C71.061 24.3826 70.4423 25.2999 69.973 26.3666C69.5463 27.3906 69.333 28.5213 69.333 29.7586V33.9186H62.293V2.55859H69.333Z"/><path d="M52.3745 0C53.6545 0 54.7212 0.426666 55.5745 1.28C56.4279 2.13333 56.8545 3.2 56.8545 4.48C56.8545 5.76 56.4279 6.82667 55.5745 7.68C54.7212 8.53333 53.6545 8.96 52.3745 8.96C51.0945 8.96 50.0279 8.53333 49.1745 7.68C48.3212 6.82667 47.8945 5.76 47.8945 4.48C47.8945 3.2 48.3212 2.13333 49.1745 1.28C50.0279 0.426666 51.0945 0 52.3745 0ZM48.8545 14.72H55.8945V45.44H48.8545V14.72Z"/><path d="M8.448 2.55859L22.208 34.9426L35.904 2.55859H44.352L25.728 45.4386H18.688L0 2.55859H8.448Z"/><path d="M245.203 71.4389V61.7539H251.638V63.3139H246.971V65.7969H251.378V67.3569H246.971V69.8789H251.638V71.4389H245.203Z"/><path d="M232.316 71.4389V61.7539H236.398C237.04 61.7539 237.586 61.8666 238.036 62.0919C238.496 62.3086 238.847 62.6206 239.089 63.0279C239.341 63.4266 239.466 63.9119 239.466 64.4839C239.466 64.9259 239.345 65.3419 239.102 65.7319C238.868 66.1132 238.491 66.4296 237.971 66.6809V65.8619C238.448 66.0439 238.825 66.2692 239.102 66.5379C239.38 66.8066 239.575 67.1056 239.687 67.4349C239.8 67.7642 239.856 68.1109 239.856 68.4749C239.856 69.4022 239.549 70.1302 238.933 70.6589C238.327 71.1789 237.482 71.4389 236.398 71.4389H232.316ZM234.084 69.8789H236.58C237.04 69.8789 237.404 69.7532 237.672 69.5019C237.95 69.2419 238.088 68.8996 238.088 68.4749C238.088 68.0502 237.95 67.7079 237.672 67.4479C237.404 67.1879 237.04 67.0579 236.58 67.0579H234.084V69.8789ZM234.084 65.5109H236.489C236.853 65.5109 237.144 65.4069 237.36 65.1989C237.577 64.9822 237.685 64.7049 237.685 64.3669C237.685 64.0289 237.577 63.7602 237.36 63.5609C237.144 63.3616 236.853 63.2619 236.489 63.2619H234.084V65.5109Z"/><path d="M224.785 71.4389V61.7539H226.553V71.4389H224.785Z"/><path d="M214.407 71.4389L211.027 61.7539H212.951L215.603 69.7749H215.226L217.878 61.7539H219.802L216.435 71.4389H214.407Z"/><path d="M193.117 71.4389V61.7539H196.718C197.377 61.7539 197.958 61.8752 198.46 62.1179C198.972 62.3519 199.37 62.6986 199.656 63.1579C199.942 63.6086 200.085 64.1589 200.085 64.8089C200.085 65.4762 199.925 66.0439 199.604 66.5119C199.292 66.9799 198.868 67.3266 198.33 67.5519L200.553 71.4389H198.551L196.172 67.1879L197.316 67.8639H194.885V71.4389H193.117ZM194.885 66.3039H196.744C197.065 66.3039 197.342 66.2432 197.576 66.1219C197.81 65.9919 197.992 65.8142 198.122 65.5889C198.252 65.3636 198.317 65.1036 198.317 64.8089C198.317 64.5056 198.252 64.2456 198.122 64.0289C197.992 63.8036 197.81 63.6302 197.576 63.5089C197.342 63.3789 197.065 63.3139 196.744 63.3139H194.885V66.3039Z"/><path d="M183.616 71.5949C182.871 71.5949 182.208 71.4389 181.627 71.1269C181.055 70.8149 180.605 70.3859 180.275 69.8399C179.946 69.2939 179.781 68.6742 179.781 67.9809V61.7539H181.549V67.8899C181.549 68.2886 181.636 68.6482 181.809 68.9689C181.991 69.2896 182.238 69.5409 182.55 69.7229C182.862 69.8962 183.218 69.9829 183.616 69.9829C184.024 69.9829 184.379 69.8962 184.682 69.7229C184.994 69.5409 185.237 69.2896 185.41 68.9689C185.592 68.6482 185.683 68.2886 185.683 67.8899V61.7539H187.451V67.9809C187.451 68.6742 187.287 69.2939 186.957 69.8399C186.628 70.3859 186.173 70.8149 185.592 71.1269C185.02 71.4389 184.362 71.5949 183.616 71.5949Z"/><path d="M169.342 71.5947C168.631 71.5947 167.968 71.469 167.353 71.2177C166.738 70.9663 166.2 70.6153 165.741 70.1647C165.282 69.714 164.922 69.1853 164.662 68.5787C164.411 67.9633 164.285 67.3003 164.285 66.5897C164.285 65.8703 164.411 65.2073 164.662 64.6007C164.913 63.994 165.269 63.4653 165.728 63.0147C166.187 62.564 166.725 62.2173 167.34 61.9747C167.955 61.7233 168.623 61.5977 169.342 61.5977C170.061 61.5977 170.729 61.7233 171.344 61.9747C171.959 62.226 172.497 62.577 172.956 63.0277C173.415 63.4697 173.771 63.994 174.022 64.6007C174.282 65.2073 174.412 65.8703 174.412 66.5897C174.412 67.3003 174.282 67.9633 174.022 68.5787C173.762 69.1853 173.402 69.714 172.943 70.1647C172.484 70.6153 171.946 70.9663 171.331 71.2177C170.724 71.469 170.061 71.5947 169.342 71.5947ZM169.342 69.9827C169.819 69.9827 170.256 69.9003 170.655 69.7357C171.054 69.5623 171.4 69.324 171.695 69.0207C171.998 68.7173 172.228 68.3577 172.384 67.9417C172.549 67.5257 172.631 67.075 172.631 66.5897C172.631 66.1043 172.549 65.658 172.384 65.2507C172.228 64.8347 171.998 64.475 171.695 64.1717C171.4 63.8597 171.054 63.6213 170.655 63.4567C170.256 63.292 169.819 63.2097 169.342 63.2097C168.874 63.2097 168.441 63.292 168.042 63.4567C167.643 63.6213 167.292 63.8597 166.989 64.1717C166.694 64.475 166.465 64.8347 166.3 65.2507C166.135 65.658 166.053 66.1043 166.053 66.5897C166.053 67.075 166.135 67.5257 166.3 67.9417C166.465 68.3577 166.694 68.7173 166.989 69.0207C167.292 69.324 167.643 69.5623 168.042 69.7357C168.441 69.9003 168.874 69.9827 169.342 69.9827Z"/><path d="M154.954 71.4389V67.1489L151.691 61.7539H153.706L156.202 65.9659H155.487L157.97 61.7539H159.985L156.735 67.1359V71.4389H154.954Z"/><path d="M133.551 71.4389V61.7539H135.319V66.7979L134.838 66.6289L138.959 61.7539H141.182L137.321 66.3299L137.425 65.0819L141.299 71.4389H139.219L136.619 67.1749L135.319 68.7219V71.4389H133.551Z"/><path d="M124.133 71.5947C123.44 71.5947 122.798 71.469 122.209 71.2177C121.628 70.9663 121.117 70.6153 120.675 70.1647C120.242 69.714 119.904 69.1853 119.661 68.5787C119.418 67.972 119.297 67.309 119.297 66.5897C119.297 65.8703 119.414 65.2073 119.648 64.6007C119.891 63.9853 120.229 63.4567 120.662 63.0147C121.104 62.564 121.62 62.2173 122.209 61.9747C122.798 61.7233 123.44 61.5977 124.133 61.5977C124.826 61.5977 125.446 61.7147 125.992 61.9487C126.547 62.1827 127.015 62.4947 127.396 62.8847C127.777 63.266 128.05 63.6863 128.215 64.1457L126.629 64.8867C126.447 64.4013 126.139 64.0027 125.706 63.6907C125.273 63.37 124.748 63.2097 124.133 63.2097C123.526 63.2097 122.989 63.3527 122.521 63.6387C122.062 63.9247 121.702 64.319 121.442 64.8217C121.191 65.3243 121.065 65.9137 121.065 66.5897C121.065 67.2657 121.191 67.8593 121.442 68.3707C121.702 68.8733 122.062 69.2677 122.521 69.5537C122.989 69.8397 123.526 69.9827 124.133 69.9827C124.748 69.9827 125.273 69.8267 125.706 69.5147C126.139 69.194 126.447 68.791 126.629 68.3057L128.215 69.0467C128.05 69.506 127.777 69.9307 127.396 70.3207C127.015 70.702 126.547 71.0097 125.992 71.2437C125.446 71.4777 124.826 71.5947 124.133 71.5947Z"/><path d="M112.051 71.4389V61.7539H113.819V71.4389H112.051Z"/><path d="M99.7227 71.4389V61.7539H103.337C103.995 61.7539 104.576 61.8752 105.079 62.1179C105.59 62.3519 105.989 62.6986 106.275 63.1579C106.561 63.6086 106.704 64.1589 106.704 64.8089C106.704 65.4502 106.556 66.0006 106.262 66.4599C105.976 66.9106 105.581 67.2572 105.079 67.4999C104.576 67.7426 103.995 67.8639 103.337 67.8639H101.491V71.4389H99.7227ZM101.491 66.3039H103.363C103.683 66.3039 103.961 66.2432 104.195 66.1219C104.429 65.9919 104.611 65.8142 104.741 65.5889C104.871 65.3636 104.936 65.1036 104.936 64.8089C104.936 64.5056 104.871 64.2456 104.741 64.0289C104.611 63.8036 104.429 63.6302 104.195 63.5089C103.961 63.3789 103.683 63.3139 103.363 63.3139H101.491V66.3039Z"/></svg></span>
+            <span class="text-[10px] uppercase tracking-widest text-gray-500 font-bold ml-2">Product Entry</span>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 sm:p-8">
+        <form id="add-product-form" class="bg-white p-6 sm:p-10 border border-gray-200 shadow-sm space-y-10">
+            
+            <div class="border-b border-gray-100 pb-6">
+                <h1 class="text-2xl font-bold tracking-tight mb-1">New Product Details</h1>
+                <p class="text-sm text-gray-500">Add mandatory information and pricing.</p>
+            </div>
+            
+            <!-- Basic Info -->
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Name *</label>
+                    <input type="text" id="add-name" class="w-full bg-gray-50 border-none p-3 text-sm focus:ring-0 focus:border-b-2 focus:border-gray-900" required>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-1/2">
+                        <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Price (BDT) *</label>
+                        <input type="number" id="add-price" step="0.01" class="w-full bg-gray-50 border-none p-3 text-sm focus:ring-0 focus:border-b-2 focus:border-gray-900" required>
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Stock count *</label>
+                        <input type="number" id="add-stock" class="w-full bg-gray-50 border-none p-3 text-sm focus:ring-0 focus:border-b-2 focus:border-gray-900" required>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold">Category</label>
+                        <button type="button" id="btn-add-category" class="text-[10px] bg-gray-200 px-2 py-1 hover:bg-gray-300 font-bold transition-colors shadow-sm">+ New</button>
+                    </div>
+                    <select id="add-category" class="w-full bg-gray-50 border-none p-3 text-sm focus:ring-0 focus:border-b-2 focus:border-gray-900">
+                        <!-- Dynamic Options injected here -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Short Description</label>
+                    <input type="text" id="add-desc" class="w-full bg-gray-50 border-none p-3 text-sm focus:ring-0 focus:border-b-2 focus:border-gray-900" required>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Sizes (Comma separated, optional)</label>
+                    <input type="text" id="add-sizes" placeholder="XS, S, M, L" class="w-full bg-gray-50 border-none p-3 text-sm focus:ring-0 focus:border-b-2 focus:border-gray-900">
+                </div>
+            </div>
+
+            <!-- Primary Thumbnail -->
+            <div class="border-t border-gray-100 pt-8">
+                <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Primary Thumbnail *</label>
+                <div class="flex items-center gap-6">
+                    <div id="thumb-preview-box" class="w-24 h-32 bg-gray-100 flex items-center justify-center border border-gray-200 overflow-hidden shrink-0">
+                        <span class="material-symbols-outlined text-gray-400">image</span>
+                        <img id="thumb-img" src="" class="hidden w-full h-full object-cover">
+                    </div>
+                    <div class="flex-grow">
+                        <input type="file" id="add-thumbnail" accept="image/*" class="w-full text-sm color-file" required>
+                        <input type="hidden" id="add-thumbnail-base64">
+                        <p class="text-xs text-gray-500 mt-2">Required. Images are compressed automatically.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Refine Details -->
+            <div class="border-t border-gray-100 pt-8">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900">Refine Details</h3>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Technical Specifications</p>
+                    </div>
+                    <button type="button" id="btn-add-detail" class="text-xs bg-gray-200 px-3 py-1 hover:bg-gray-300 font-bold transition-colors shadow-sm">+ New Detail</button>
+                </div>
+                <div id="details-container" class="space-y-4">
+                    <!-- Dynamic details inserted here -->
+                </div>
+            </div>
+
+            <!-- Focus Gallery Views -->
+            <div class="border-t border-gray-100 pt-8">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900 mb-1">Product Views Gallery</h3>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4">Upload up to 3 additional gallery images</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6" id="gallery-container">
+                    <!-- Image 1 -->
+                    <div class="bg-gray-50 p-4 border border-gray-200 flex flex-col items-center text-center gap-3">
+                        <div class="w-full aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
+                            <span class="material-symbols-outlined text-gray-400">photo_library</span>
+                            <img src="" class="hidden w-full h-full object-cover gallery-img">
+                        </div>
+                        <input type="file" accept="image/*" class="w-full text-xs gallery-upload">
+                        <input type="hidden" class="gallery-base64">
+                    </div>
+                    <!-- Image 2 -->
+                    <div class="bg-gray-50 p-4 border border-gray-200 flex flex-col items-center text-center gap-3">
+                        <div class="w-full aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
+                            <span class="material-symbols-outlined text-gray-400">photo_library</span>
+                            <img src="" class="hidden w-full h-full object-cover gallery-img">
+                        </div>
+                        <input type="file" accept="image/*" class="w-full text-xs gallery-upload">
+                        <input type="hidden" class="gallery-base64">
+                    </div>
+                    <!-- Image 3 -->
+                    <div class="bg-gray-50 p-4 border border-gray-200 flex flex-col items-center text-center gap-3">
+                        <div class="w-full aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
+                            <span class="material-symbols-outlined text-gray-400">photo_library</span>
+                            <img src="" class="hidden w-full h-full object-cover gallery-img">
+                        </div>
+                        <input type="file" accept="image/*" class="w-full text-xs gallery-upload">
+                        <input type="hidden" class="gallery-base64">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Colors Section -->
+            <div class="border-t border-gray-100 pt-8">
+                <div class="flex justify-between items-center mb-4">
+                    <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold">Colors Swatches</label>
+                    <button type="button" id="btn-add-color" class="text-xs bg-gray-200 px-3 py-1 hover:bg-gray-300 font-bold transition-colors shadow-sm">+ Add Color</button>
+                </div>
+                <div id="colors-container" class="space-y-4"></div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-8">
+                <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Video context URL (Optional iframe)</label>
+                <input type="url" id="add-video" placeholder="https://..." class="w-full bg-gray-50 border-none p-3 text-sm focus:ring-0 focus:border-b-2 focus:border-gray-900">
+            </div>
+
+            <div class="pt-6">
+                <button type="submit" class="w-full bg-gray-900 text-white font-bold uppercase tracking-widest text-sm py-5 hover:bg-black transition-colors shadow-xl">
+                    Save Product & Return to Inventory
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script src="store.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const catSelect = document.getElementById('add-category');
+            if (window.AppStore && catSelect) {
+                const renderOptions = () => {
+                    catSelect.innerHTML = window.AppStore.state.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+                };
+                renderOptions();
+
+                document.getElementById('btn-add-category').addEventListener('click', () => {
+                    const newCat = prompt("Enter new category name:");
+                    if (newCat && newCat.trim()) {
+                        window.AppStore.addNewCategory(newCat.trim());
+                        renderOptions();
+                        catSelect.value = newCat.trim();
+                    }
+                });
+            }
+        });
+
+        // Img Downscaler (Canvas)
+        function resizeImageFile(file, maxWidth, maxHeight, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round(height * (maxWidth / width));
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round(width * (maxHeight / height));
+                            height = maxHeight;
+                        }
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    callback(canvas.toDataURL('image/jpeg', 0.8)); // compressed JPEG
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // Primary Thumbnail Handler
+        document.getElementById('add-thumbnail').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                resizeImageFile(file, 1000, 1000, (base64) => {
+                    document.getElementById('add-thumbnail-base64').value = base64;
+                    const imgPreview = document.getElementById('thumb-img');
+                    imgPreview.src = base64;
+                    imgPreview.classList.remove('hidden');
+                });
+            }
+        });
+
+        // Gallery Handlers
+        document.querySelectorAll('.gallery-upload').forEach((input, index) => {
+            input.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                const wrapper = e.target.closest('div.border');
+                const base64Input = wrapper.querySelector('.gallery-base64');
+                const imgPreview = wrapper.querySelector('.gallery-img');
+                
+                if (file) {
+                    resizeImageFile(file, 1200, 1200, (base64) => {
+                        base64Input.value = base64;
+                        imgPreview.src = base64;
+                        imgPreview.classList.remove('hidden');
+                    });
+                }
+            });
+        });
+
+        // Add Dynamic Detail Row
+        document.getElementById('btn-add-detail').addEventListener('click', () => {
+            const container = document.getElementById('details-container');
+            const div = document.createElement('div');
+            div.className = 'flex gap-12 items-start relative detail-row mt-2';
+            div.innerHTML = `
+                <div class="w-1/3">
+                    <input type="text" placeholder="Title (e.g., Weight)" class="w-full bg-gray-50 border border-gray-200 p-2 text-sm focus:ring-0 focus:border-gray-900 tech-title" required>
+                </div>
+                <div class="flex-grow relative">
+                    <input type="text" placeholder="Value/Description" class="w-full bg-gray-50 border border-gray-200 p-2 text-sm focus:ring-0 focus:border-gray-900 tech-value" required>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="p-2 text-gray-400 hover:text-red-600 bg-gray-100 hover:bg-red-50 transition-colors">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+            `;
+            container.appendChild(div);
+        });
+
+        // Add Dynamic Color Row
+        document.getElementById('btn-add-color').addEventListener('click', () => {
+            const container = document.getElementById('colors-container');
+            const div = document.createElement('div');
+            div.className = 'bg-white border text-sm border-gray-200 p-4 relative flex gap-4 items-center';
+            div.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+                <div class="flex flex-col gap-3 flex-grow">
+                    <input type="text" placeholder="Color Name (e.g., Midnight Blue)" class="w-full bg-gray-50 border border-gray-200 p-2 text-sm focus:ring-0 focus:border-gray-900 color-name" required>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gray-100 flex items-center justify-center border shrink-0">
+                             <img class="hidden w-full h-full object-cover color-img" src="">
+                             <span class="material-symbols-outlined text-xs text-gray-400 icon">image</span>
+                        </div>
+                        <input type="file" accept="image/*" class="w-full text-xs color-file" required>
+                        <input type="hidden" class="color-base64">
+                    </div>
+                </div>
+            `;
+            
+            const fileInput = div.querySelector('.color-file');
+            const hiddenInput = div.querySelector('.color-base64');
+            const imgPreview = div.querySelector('.color-img');
+            const icon = div.querySelector('.icon');
+
+            fileInput.addEventListener('change', (evt) => {
+                const f = evt.target.files[0];
+                if (f) {
+                    resizeImageFile(f, 600, 600, (base64) => {
+                        hiddenInput.value = base64;
+                        imgPreview.src = base64;
+                        imgPreview.classList.remove('hidden');
+                        icon.classList.add('hidden');
+                    });
+                }
+            });
+
+            container.appendChild(div);
+        });
+
+        // Handle form submit
+        document.getElementById('add-product-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Validate thumbnail
+            const thumbBase64 = document.getElementById('add-thumbnail-base64').value;
+            if (!thumbBase64) {
+                alert("Please wait for the primary thumbnail to compress and load.");
+                return;
+            }
+
+            // Gather Details List
+            const detailsNodes = document.querySelectorAll('.detail-row');
+            const detailsList = [];
+            detailsNodes.forEach(row => {
+                const t = row.querySelector('.tech-title').value.trim();
+                const v = row.querySelector('.tech-value').value.trim();
+                if (t && v) detailsList.push({ title: t, value: v });
+            });
+
+            // Gather Gallery array
+            const galleryNodes = document.querySelectorAll('.gallery-base64');
+            const galleryImages = [];
+            galleryNodes.forEach(node => {
+                if (node.value) galleryImages.push(node.value);
+            });
+
+            // Gather Colors
+            const colorBlocks = document.querySelectorAll('#colors-container > div');
+            const colorsArray = [];
+            colorBlocks.forEach(blk => {
+                const cName = blk.querySelector('.color-name').value;
+                const cBase64 = blk.querySelector('.color-base64').value;
+                if (cName && cBase64) {
+                    colorsArray.push({ colorName: cName, colorImage: cBase64 });
+                }
+            });
+
+            const sizesRaw = document.getElementById('add-sizes').value;
+            const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            const product = {
+                name: document.getElementById('add-name').value.trim(),
+                description: document.getElementById('add-desc').value.trim(),
+                price: parseFloat(document.getElementById('add-price').value),
+                stockCount: parseInt(document.getElementById('add-stock').value),
+                category: document.getElementById('add-category').value,
+                images: [thumbBase64],
+                sizes: sizes,
+                videoUrl: document.getElementById('add-video').value.trim(),
+                colors: colorsArray,
+                detailsList: detailsList,
+                galleryImages: galleryImages
+            };
+
+            try {
+                window.AppStore.addNewProduct(product);
+                // Success redirect
+                alert("Product added successfully!");
+                window.location.href = 'admin.html?module=inventory';
+            } catch (err) {
+                console.error(err);
+                alert("Failed to save product. If browser storage is completely full, try clearing cache.");
+            }
+        });
+    </script>
+</body>
+</html>

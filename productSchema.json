@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Product",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The unique identifier for a product"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the product"
+    },
+    "category": {
+      "type": "string",
+      "description": "Product category (e.g., 'Outerwear', 'Footwear')"
+    },
+    "price": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Product price in USD"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "description": "Array of image URLs showcasing the product"
+    },
+    "stockStatus": {
+      "type": "string",
+      "enum": [
+        "IN_STOCK",
+        "OUT_OF_STOCK",
+        "PREORDER"
+      ],
+      "description": "Current availability status of the product"
+    },
+    "ratings": {
+      "type": "object",
+      "properties": {
+        "average": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5,
+          "description": "Average user rating out of 5"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of user ratings"
+        }
+      },
+      "required": [
+        "average",
+        "count"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "category",
+    "price",
+    "images",
+    "stockStatus"
+  ]
+}
