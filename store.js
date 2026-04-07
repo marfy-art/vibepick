@@ -1,48 +1,4 @@
-const defaultProducts = [
-    {
-        id: "prod-001",
-        name: "Structured Wool Overcoat",
-        category: "Outerwear",
-        price: 840.00,
-        images: ["https://lh3.googleusercontent.com/aida-public/AB6AXuDlN_fhUFRc_vr0Cqa5jXXI6lCAU3hjFM0rNwg3Ho1eKmmTM1Udvowcgf8MYGjNUTSSDhFGu4c8pBqJOBT9EuUkWPYDaOC-9JHQ_BCpsXf26UHjrT82Lo8zsKv4NH2a2namJs0VA79H-wbPY6LM5LWf3PjkrkU4UoA3cpoLjHBT2cjZJkFw3Lpl4XU-TEFhA2kxMd9N84-LGDkBmRa0R6S_x4LTIfsujjjGoaeo9JT7imDLbqDCn9FwfMOLnSkI2NmuTHiliU0glNY"],
-        stockCount: 6,
-        description: "Anthracite Grey",
-        colors: [
-            { colorName: "Graphite Gray", colorImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuDlN_fhUFRc_vr0Cqa5jXXI6lCAU3hjFM0rNwg3Ho1eKmmTM1Udvowcgf8MYGjNUTSSDhFGu4c8pBqJOBT9EuUkWPYDaOC-9JHQ_BCpsXf26UHjrT82Lo8zsKv4NH2a2namJs0VA79H-wbPY6LM5LWf3PjkrkU4UoA3cpoLjHBT2cjZJkFw3Lpl4XU-TEFhA2kxMd9N84-LGDkBmRa0R6S_x4LTIfsujjjGoaeo9JT7imDLbqDCn9FwfMOLnSkI2NmuTHiliU0glNY" }
-        ],
-        videoUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuBJbabA0DFXJ2LgGOGUSpgF974q6ceVmzMxMZWmtp097jhVzFEOqTlUTafe8zd7Tqi5qX5wZlpVoPs296hwbWGLIQ_KM8AqANGGUdN6XldnBtqV912UIZiHoFPXSd3JJ1iOB_SbE12yXZ3m_yf_07oPtNlEiB1LKf5-1zhbvHjXu3VNRHeEFfZVLGhCFIse4Z-t3k6GDNG6DK1oq4h_y0JZhFZ1vcPHUZKKPFpL9rsXNRr1OeHYzb5-C2QWlvRPnyEX5lHUSzwMzTM",
-        refinedDetails: {
-            title: "Refined details for the modern collector.",
-            text: "This overcoat is crafted from premium wool, ensuring both warmth and style. The classic cut is timeless."
-        },
-        sizes: ["XS", "S", "M", "L", "XL"]
-    },
-    {
-        id: "prod-002",
-        name: "Raw Silk Blouse",
-        category: "Tops",
-        price: 320.00,
-        images: ["https://lh3.googleusercontent.com/aida-public/AB6AXuCqXwMJGwn895CNxYIXrsa4fiTdwrd4nRmKWpNI2sk0XGeqh36L_FhAn1GC7wKvV-4EWF_8gFI18X3dsZPiYWwW8vvIxLFiJHJVU7QFnnpKJiUwEwYTfKfGy6I9vbqx-We9xpFV1BGyy-xq1Uc-adC0xlTaR6RcS5JNokhO42SvFEk26gtbnL85DitsmEfOI_BKlrOBflHML_KzRB5khnTMYZ4ggjvvpQavLcHS3WbK166X0jRIYTO20aO34y5oi6qOca7j56R0BDY"],
-        stockCount: 2,
-        description: "Ivory White",
-        colors: [
-            { colorName: "Ivory White", colorImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuCqXwMJGwn895CNxYIXrsa4fiTdwrd4nRmKWpNI2sk0XGeqh36L_FhAn1GC7wKvV-4EWF_8gFI18X3dsZPiYWwW8vvIxLFiJHJVU7QFnnpKJiUwEwYTfKfGy6I9vbqx-We9xpFV1BGyy-xq1Uc-adC0xlTaR6RcS5JNokhO42SvFEk26gtbnL85DitsmEfOI_BKlrOBflHML_KzRB5khnTMYZ4ggjvvpQavLcHS3WbK166X0jRIYTO20aO34y5oi6qOca7j56R0BDY" }
-        ],
-        sizes: ["S", "M"]
-    },
-    {
-        id: "prod-003",
-        name: "Architectural Heel",
-        category: "Footwear",
-        price: 560.00,
-        images: ["https://lh3.googleusercontent.com/aida-public/AB6AXuCJDlOvAew9MtVZnYIuZg_fJd1kVHgUI9DwBjMFxXe6FCPuNHny4jtm4yJyDgxanjORZNtYtSXlCZs5dHuAgX6_eP97rFCcCxUsM92djw6Y6tTwi15pv5lKGYIuFHyHXztT3AYgU4K1PSZSCTSKZ2C__qe-PfGxD7IyvCCG3PNX_il7BZRN-YtU6VIl-4cjOKHmhjtrWhGUbzU-7X2ubJdvoYmNp3w4IAhBUmrJ_9ted1CNBjAFYEFXksaTNS_73Dkif2eTPJk7hPY"],
-        stockCount: 0,
-        description: "Matte Black Leather",
-        colors: [
-            { colorName: "Matte Black", colorImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuCJDlOvAew9MtVZnYIuZg_fJd1kVHgUI9DwBjMFxXe6FCPuNHny4jtm4yJyDgxanjORZNtYtSXlCZs5dHuAgX6_eP97rFCcCxUsM92djw6Y6tTwi15pv5lKGYIuFHyHXztT3AYgU4K1PSZSCTSKZ2C__qe-PfGxD7IyvCCG3PNX_il7BZRN-YtU6VIl-4cjOKHmhjtrWhGUbzU-7X2ubJdvoYmNp3w4IAhBUmrJ_9ted1CNBjAFYEFXksaTNS_73Dkif2eTPJk7hPY" }
-        ]
-    }
-];
+const defaultProducts = [];
 
 window.AppStore = {
     state: {
@@ -321,7 +277,7 @@ window.AppStore = {
             <aside id="global-cart-sidebar" class="absolute right-0 top-0 h-full w-full md:w-[450px] bg-white shadow-2xl flex flex-col translate-x-full transition-transform duration-300">
                 <header class="p-8 pb-4 border-b border-gray-200 flex justify-between items-center">
                     <div>
-                        <h2 class="text-lg font-bold">Your Selection</h2>
+                        <h2 class="text-lg font-bold">Shopping Bag</h2>
                     </div>
                     <button data-action="close-cart" class="text-gray-500 hover:text-black">
                         <span class="material-symbols-outlined" style="pointer-events: none;">close</span>
