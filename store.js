@@ -784,10 +784,10 @@ window.initStoreUI = function() {
             }
 
             const customerDetails = {
-                name: document.getElementById('c-fname')?.value + " " + document.getElementById('c-lname')?.value,
-                email: document.getElementById('c-email')?.value,
-                address: document.getElementById('c-address')?.value,
-                phone: document.getElementById('c-phone')?.value
+                name: document.getElementById('c-name')?.value || "Guest",
+                email: document.getElementById('c-email')?.value || "N/A",
+                phone: document.getElementById('c-phone')?.value || "N/A",
+                address: `${document.getElementById('c-address')?.value || ''}, ${document.getElementById('c-city')?.value || ''}, ${document.getElementById('c-postcode')?.value || ''}`.trim().replace(/^, |, $/g, '')
             };
             
             window.AppStore.checkout(customerDetails);
