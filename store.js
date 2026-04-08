@@ -321,12 +321,12 @@ window.AppStore = {
         container.innerHTML = this.state.cart.map(item => `
             <div class="flex gap-4">
                 <div class="w-20 h-28 bg-gray-100 flex-shrink-0">
-                    <img src="${item.images && item.images[0] ? item.images[0] : './placeholder.jpg'}" class="w-full h-full object-cover" alt="${item.name}" />
+                    <img src="${item.selectedColorColorName || (item.images && item.images[0] ? item.images[0] : './placeholder.jpg')}" class="w-full h-full object-cover" alt="${item.name}" />
                 </div>
                 <div class="flex flex-col justify-between flex-grow">
                     <div>
                         <div class="flex justify-between items-start gap-2 min-w-0">
-                            <h3 class="text-sm font-bold text-gray-900 truncate">${item.name} ${item.size ? `(${item.size})` : ''}</h3>
+                            <h3 class="text-sm font-bold text-gray-900 break-words line-clamp-2 flex-1 min-w-0">${item.name} ${item.size ? `(${item.size})` : ''}</h3>
                             <button data-action="remove-item" data-id="${item.cartId}" class="text-gray-400 hover:text-red-700 transition-colors">
                                 <span class="material-symbols-outlined text-sm" style="pointer-events: none;">delete</span>
                             </button>
@@ -399,12 +399,12 @@ window.AppStore = {
         let itemsHtml = this.state.cart.map(item => `
             <div class="flex gap-4 group">
                 <div class="w-20 h-28 bg-gray-100 flex-shrink-0">
-                    <img src="${item.images && item.images[0] ? item.images[0] : './placeholder.jpg'}" class="w-full h-full object-cover" alt="${item.name}" />
+                    <img src="${item.selectedColorColorName || (item.images && item.images[0] ? item.images[0] : './placeholder.jpg')}" class="w-full h-full object-cover" alt="${item.name}" />
                 </div>
-                <div class="flex flex-col justify-between flex-grow py-1">
+                <div class="flex flex-col justify-between flex-grow py-1 min-w-0">
                     <div>
                         <div class="flex justify-between items-start gap-2 min-w-0">
-                            <h4 class="font-bold text-sm text-gray-900 truncate">${item.name} ${item.size ? `(${item.size})` : ''}</h4>
+                            <h4 class="font-bold text-sm text-gray-900 break-words line-clamp-2 flex-1 min-w-0">${item.name} ${item.size ? `(${item.size})` : ''}</h4>
                             <button data-action="remove-item" data-id="${item.cartId}" class="text-gray-400 hover:text-red-700 transition-colors">
                                 <span class="material-symbols-outlined text-sm" style="pointer-events: none;">delete</span>
                             </button>
@@ -797,6 +797,28 @@ window.initStoreUI = function() {
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
                 setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            }
+        });
+    }
+
+    // Modal Close Logic
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    if (closeModalBtn && !closeModalBtn.dataset.bound) {
+        closeModalBtn.dataset.bound = 'true';
+        closeModalBtn.addEventListener('click', () => {
+            const modal = document.getElementById('order-modal');
+            if (modal) {
+                modal.classList.add('opacity-0');
+                setTimeout(() => {
+                    modal.classList.remove('flex');
+                    modal.classList.add('hidden');
+                    if (window.handleRouting) {
+                        window.history.pushState({ path: 'index.html' }, '', 'index.html');
+                        window.handleRouting('index.html');
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }, 500);
             }
         });
     }

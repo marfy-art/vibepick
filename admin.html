@@ -313,10 +313,10 @@
     <script src="store.js"></script>
     <script>
         // SYSTEM RESET LOGIC (ONE-TIME CLEAN START)
-        if (!localStorage.getItem('vibepick_sys_reset_v4')) {
+        if (!localStorage.getItem('vibepick_sys_reset_v5')) {
             localStorage.setItem('app_orders', JSON.stringify([]));
             localStorage.setItem('app_sales', JSON.stringify({ totalRevenue: 0, totalItemsSold: 0 }));
-            localStorage.setItem('vibepick_sys_reset_v4', 'true');
+            localStorage.setItem('vibepick_sys_reset_v5', 'true');
             window.location.reload();
         }
 
@@ -425,7 +425,7 @@
                     </td>
                     <td class="py-4 px-6 align-top">
                         <div class="w-[50px] h-[50px] bg-gray-100 rounded-sm overflow-hidden border border-gray-100">
-                             <img src="${firstItem.images && firstItem.images[0] ? firstItem.images[0] : './placeholder.jpg'}" class="w-full h-full object-cover" />
+                             <img src="${firstItem.selectedColorColorName || (firstItem.images && firstItem.images[0] ? firstItem.images[0] : './placeholder.jpg')}" class="w-full h-full object-cover" />
                         </div>
                     </td>
                     <td class="py-4 px-6 align-top" data-action="view-details" data-id="${order.id}">
@@ -527,11 +527,11 @@
             itemsList.innerHTML = order.items.map(i => `
                 <div class="flex items-center gap-6 p-4 bg-gray-50 border border-gray-100 rounded-sm">
                     <div class="w-16 h-20 bg-white flex-shrink-0 border border-gray-200 overflow-hidden">
-                        <img src="${i.images && i.images[0] ? i.images[0] : './placeholder.jpg'}" class="w-full h-full object-cover" />
+                        <img src="${i.selectedColorColorName || (i.images && i.images[0] ? i.images[0] : './placeholder.jpg')}" class="w-full h-full object-cover" />
                     </div>
-                    <div class="flex-grow flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-sm">${i.name}</h4>
+                    <div class="flex-grow flex justify-between items-center min-w-0 gap-4">
+                        <div class="min-w-0 flex-1">
+                            <h4 class="font-bold text-sm break-words line-clamp-2">${i.name}</h4>
                             <p class="text-xs text-gray-500 uppercase tracking-widest mt-1">${i.category || 'Product'}${i.size ? ` / ${i.size}` : ''}</p>
                         </div>
                         <div class="text-right">
