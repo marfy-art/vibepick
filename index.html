@@ -89,6 +89,10 @@
     .tonal-shift-bg {
       background-color: #f2f4f4;
     }
+
+    .animate-fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
   </style>
 </head>
 
@@ -137,11 +141,7 @@
               d="M99.7227 71.4389V61.7539H103.337C103.995 61.7539 104.576 61.8752 105.079 62.1179C105.59 62.3519 105.989 62.6986 106.275 63.1579C106.561 63.6086 106.704 64.1589 106.704 64.8089C106.704 65.4502 106.556 66.0006 106.262 66.4599C105.976 66.9106 105.581 67.2572 105.079 67.4999C104.576 67.7426 103.995 67.8639 103.337 67.8639H101.491V71.4389H99.7227ZM101.491 66.3039H103.363C103.683 66.3039 103.961 66.2432 104.195 66.1219C104.429 65.9919 104.611 65.8142 104.741 65.5889C104.871 65.3636 104.936 65.1036 104.936 64.8089C104.936 64.5056 104.871 64.2456 104.741 64.0289C104.611 63.8036 104.429 63.6302 104.195 63.5089C103.961 63.3789 103.683 63.3139 103.363 63.3139H101.491V66.3039Z" />
           </svg></a>
       </div>
-      <div class="flex items-center gap-6">
-        <button
-          class="hover:opacity-70 transition-opacity duration-300 active:scale-95 transition-transform duration-200">
-          <span class="material-symbols-outlined text-neutral-800 dark:text-neutral-100">search</span>
-        </button>
+      <div class="flex items-center gap-2 sm:gap-6">
         <button data-action="open-cart"
           class="cart-toggle-btn hover:opacity-70 transition-opacity duration-300 active:scale-95 transition-transform duration-200 relative">
           <span class="material-symbols-outlined text-neutral-800 dark:text-neutral-100"
@@ -149,10 +149,6 @@
           <span
             class="absolute -top-1 -right-1 bg-secondary text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full app-cart-badge"
             style="display:none; pointer-events: none;">0</span>
-        </button>
-        <button
-          class="hover:opacity-70 transition-opacity duration-300 active:scale-95 transition-transform duration-200">
-          <span class="material-symbols-outlined text-neutral-800 dark:text-neutral-100">person</span>
         </button>
       </div>
     </div>
@@ -172,21 +168,20 @@
           src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzUngWJh6nLQKp-P2dtdTZMnYaKiDMaGqHevUdy30eNbzpFaLd92-ywotxUbZwuGzOzDoQHzorg5vaR2a7ZTcax0un_jdumf__XqjEDGIZ0a9AkHej_byukfhel-2Y2pvvFp1N_3avHqKbP_F5l4KgSD_1ar55qNeww-vyjV5Lcuiv8lWhgMdyRlII8-uPyv6KCh6-M7dr6C0xt33GUNnjrF6U3WYuHYduJo7h9orUPOMe9f4I5tdc-cWrUl5tUkL4krCE-oxZINA" />
       </div>
       <div class="lg:col-span-5 lg:pl-12">
-        <h2 class="font-headline text-4xl font-extrabold tracking-tighter mb-6 text-on-surface">The Sustainability
+        <h2 class="font-headline text-4xl font-extrabold tracking-tighter mb-6 text-on-surface">The VibePick Promise
           Manifesto</h2>
         <p class="font-body text-on-surface-variant leading-relaxed mb-8">
-          We believe in the longevity of design. Each piece in our Archive and New Arrival collections is sourced with a
-          focus on ethical production and timeless aesthetic value.
+          We believe in the power of smart design. Every gadget in our collection is handpicked with a focus on seamless
+          functionality, portability, and modern aesthetic value. From cooling your summer days to simplifying your
+          lifestyle, we bring you tech that fits your vibe.
         </p>
-        <a class="inline-block border-b-2 border-primary pb-1 font-label text-sm uppercase tracking-widest font-bold hover:text-secondary hover:border-secondary transition-colors"
-          href="#">Read Our Journal</a>
+
       </div>
     </section>
   </main>
   <footer class="w-full mt-20 bg-neutral-200 dark:bg-neutral-800">
-    <div
-      class="flex flex-col md:flex-row justify-between items-center px-12 py-16 gap-8 w-full max-w-screen-2xl mx-auto">
-      <div class="flex flex-col items-center md:items-start gap-4">
+    <div class="flex flex-col md:flex-row items-center px-12 py-16 gap-8 w-full max-w-screen-2xl mx-auto">
+      <div class="flex-1 basis-0 flex flex-col items-center md:items-start gap-4">
         <span class="text-lg font-bold text-neutral-800 dark:text-neutral-200"><svg xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 252 72" class="h-6 w-auto fill-current">
             <path
@@ -227,19 +222,20 @@
             <path
               d="M99.7227 71.4389V61.7539H103.337C103.995 61.7539 104.576 61.8752 105.079 62.1179C105.59 62.3519 105.989 62.6986 106.275 63.1579C106.561 63.6086 106.704 64.1589 106.704 64.8089C106.704 65.4502 106.556 66.0006 106.262 66.4599C105.976 66.9106 105.581 67.2572 105.079 67.4999C104.576 67.7426 103.995 67.8639 103.337 67.8639H101.491V71.4389H99.7227ZM101.491 66.3039H103.363C103.683 66.3039 103.961 66.2432 104.195 66.1219C104.429 65.9919 104.611 65.8142 104.741 65.5889C104.871 65.3636 104.936 65.1036 104.936 64.8089C104.936 64.5056 104.871 64.2456 104.741 64.0289C104.611 63.8036 104.429 63.6302 104.195 63.5089C103.961 63.3789 103.683 63.3139 103.363 63.3139H101.491V66.3039Z" />
           </svg></span>
-        <p class="font-inter text-xs tracking-widest uppercase text-neutral-900 dark:text-neutral-50">© 2026 VIBEPICK.
+        <p
+          class="font-inter text-xs tracking-widest uppercase text-neutral-900 dark:text-neutral-50 text-center md:text-left">
+          © 2026 VIBEPICK.
           ALL RIGHTS RESERVED.</p>
       </div>
-      <div class="flex flex-wrap justify-center gap-8">
-        <a class="font-inter text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 hover:text-red-700 dark:hover:text-red-400 transition-colors hover:underline decoration-1 underline-offset-4"
-          href="#">Privacy Policy</a>
-        <a class="font-inter text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 hover:text-red-700 dark:hover:text-red-400 transition-colors hover:underline decoration-1 underline-offset-4"
+      <div class="flex-shrink-0 flex flex-wrap justify-center gap-12">
+        <a class="font-inter text-[10px] tracking-[0.2em] uppercase text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-all font-bold"
           href="#">Shipping & Returns</a>
-        <a class="font-inter text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 hover:text-red-700 dark:hover:text-red-400 transition-colors hover:underline decoration-1 underline-offset-4"
+        <a class="font-inter text-[10px] tracking-[0.2em] uppercase text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-all font-bold"
           href="#">Contact</a>
-        <a class="font-inter text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 hover:text-red-700 dark:hover:text-red-400 transition-colors hover:underline decoration-1 underline-offset-4"
-          href="#">Sustainability</a>
+        <a class="font-inter text-[10px] tracking-[0.2em] uppercase text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-all font-bold"
+          href="#">About</a>
       </div>
+      <div class="flex-1 basis-0 hidden md:flex"></div>
     </div>
   </footer>
 

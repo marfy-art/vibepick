@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - CURATOR</title>
+    <title>Admin Dashboard - VIBEPICK</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300,0&display=swap" rel="stylesheet">
@@ -481,7 +481,10 @@
                             ${p.stockCount} in stock
                         </span>
                     </td>
-                    <td class="py-4 px-6 text-right">
+                    <td class="py-4 px-6 text-right flex justify-end gap-2">
+                        <a href="add-product.html?edit=${p.id}" class="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors">
+                            <span class="material-symbols-outlined text-sm">edit</span>
+                        </a>
                         <button data-action="delete-product" data-id="${p.id}" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
                             <span class="material-symbols-outlined text-sm" style="pointer-events:none;">delete</span>
                         </button>

@@ -1,5 +1,12 @@
 const defaultProducts = [];
 
+// --- ONE-TIME RESET FOR TESTING ---
+if (!localStorage.getItem('vibepick_init_v2')) {
+    localStorage.clear();
+    localStorage.setItem('vibepick_init_v2', 'true');
+    console.log('One-time testing reset applied.');
+}
+
 window.AppStore = {
     state: {
         categories: JSON.parse(localStorage.getItem('app_categories')) || ["Outerwear", "Tops", "Footwear", "Accessories"],
@@ -7,8 +14,62 @@ window.AppStore = {
         cart: JSON.parse(localStorage.getItem('app_cart')) || [],
         sales: JSON.parse(localStorage.getItem('app_sales')) || { totalRevenue: 0, totalItemsSold: 0 },
         orders: JSON.parse(localStorage.getItem('app_orders')) || [],
-        financialReports: JSON.parse(localStorage.getItem('app_reports')) || []
-    },
+        financialReports: JSON.parse(localStorage.getItem('app_reports')) || [],
+    searchTerm: '',
+    
+    // MediaDB: IndexedDB utility for large file storage (Videos)
+    mediaDB: {
+        dbName: 'vibepick_media_v1',
+        storeName: 'media',
+        
+        async init() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(this.dbName, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(this.storeName)) {
+                        db.createObjectStore(this.storeName);
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        },
+
+        async save(id, blob) {
+            const db = await this.init();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(this.storeName, 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                store.put(blob, id);
+                transaction.oncomplete = () => resolve(id);
+                transaction.onerror = () => reject(transaction.error);
+            });
+        },
+
+        async get(id) {
+            const db = await this.init();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(this.storeName, 'readonly');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        },
+
+        async delete(id) {
+            const db = await this.init();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(this.storeName, 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                store.delete(id);
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error);
+            });
+        }
+    }
+},
 
     // --- DATA MIGRATION HUB ---
     migrateData(encodedData) {
@@ -213,28 +274,99 @@ window.AppStore = {
         return str.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     },
     
-    addNewProduct(productData) {
-        // Deep recursive sanitization to protect against XSS
-        const sanitizeObj = (obj) => {
-            if (typeof obj === 'string') return this.sanitizeString(obj);
+    async addNewProduct(productData) {
+        // Deep recursive sanitization
+        const sanitizeObj = (obj, isDescription = false) => {
+            if (typeof obj === 'string') {
+                // Allow HTML for descriptions (from Quill)
+                if (isDescription) return obj; 
+                return this.sanitizeString(obj);
+            }
             if (Array.isArray(obj)) return obj.map(item => sanitizeObj(item));
             if (typeof obj === 'object' && obj !== null) {
                 const newObj = {};
-                for (let key in obj) newObj[key] = sanitizeObj(obj[key]);
+                for (let key in obj) {
+                    newObj[key] = sanitizeObj(obj[key], key === 'description');
+                }
                 return newObj;
             }
             return obj;
         };
+
+        const prodId = `prod-${Date.now()}`;
+        
+        // Handle Video Upload (IndexedDB)
+        if (productData.videoFile instanceof Blob) {
+            const videoId = `vid-${prodId}`;
+            await this.mediaDB.save(videoId, productData.videoFile);
+            productData.videoUrl = videoId; // Using ID as URL reference for internal lookup
+            delete productData.videoFile;
+        }
+
         const safeProduct = sanitizeObj(productData);
 
         this.state.products.unshift({
-            id: `prod-${Date.now()}`,
+            id: prodId,
             ...safeProduct
         });
         this.saveState();
     },
+
+    async updateProduct(id, productData) {
+        // Find existing product
+        const index = this.state.products.findIndex(p => p.id === id);
+        if (index === -1) return;
+
+        const oldProduct = this.state.products[index];
+
+        // Sanitization logic
+        const sanitizeObj = (obj, isDescription = false) => {
+            if (typeof obj === 'string') {
+                if (isDescription) return obj; 
+                return this.sanitizeString(obj);
+            }
+            if (Array.isArray(obj)) return obj.map(item => sanitizeObj(item));
+            if (typeof obj === 'object' && obj !== null) {
+                const newObj = {};
+                for (let key in obj) {
+                    newObj[key] = sanitizeObj(obj[key], key === 'description');
+                }
+                return newObj;
+            }
+            return obj;
+        };
+
+        // Handle Video Update
+        if (productData.videoFile instanceof Blob) {
+            // Delete old IndexedDB video if it exists
+            if (oldProduct.videoUrl && oldProduct.videoUrl.startsWith('vid-')) {
+                await this.mediaDB.delete(oldProduct.videoUrl);
+            }
+            const videoId = `vid-${id}`;
+            await this.mediaDB.save(videoId, productData.videoFile);
+            productData.videoUrl = videoId;
+            delete productData.videoFile;
+        } else if (!productData.videoUrl && oldProduct.videoUrl) {
+            // If video was removed in UI
+             if (oldProduct.videoUrl.startsWith('vid-')) {
+                await this.mediaDB.delete(oldProduct.videoUrl);
+            }
+        }
+
+        const safeProduct = sanitizeObj(productData);
+
+        this.state.products[index] = {
+            ...oldProduct,
+            ...safeProduct
+        };
+        this.saveState();
+    },
     
-    deleteProduct(id) {
+    async deleteProduct(id) {
+        const product = this.state.products.find(p => p.id === id);
+        if (product && product.videoUrl && product.videoUrl.startsWith('vid-')) {
+            await this.mediaDB.delete(product.videoUrl);
+        }
         this.state.products = this.state.products.filter(p => p.id !== id);
         this.state.cart = this.state.cart.filter(c => c.id !== id);
         this.saveState();
@@ -243,6 +375,14 @@ window.AppStore = {
     getCartTotals() {
         const subtotal = this.state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         return { subtotal, shipping: 0, total: subtotal };
+    },
+
+    setSearchTerm(query) {
+        const cleanQuery = (query || '').toLowerCase().trim();
+        this.state.searchTerm = cleanQuery;
+        sessionStorage.setItem('app_search_term', cleanQuery);
+        console.log(`SearchTerm set to: "${cleanQuery}"`);
+        this.renderProductsList();
     },
 
     // UI RENDERERS
@@ -351,7 +491,18 @@ window.AppStore = {
         if (!container) return;
 
         container.innerHTML = '';
-        this.state.products.forEach(product => {
+        const products = this.state.products;
+
+        if (products.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full py-32 text-center animate-fade-in">
+                    <p class="text-on-surface-variant font-headline text-2xl tracking-tight italic">Coming Soon: Curated Collection</p>
+                </div>
+            `;
+            return;
+        }
+
+        products.forEach(product => {
             const isOutOfStock = product.stockCount === 0;
             const isLowStock = product.stockCount > 0 && product.stockCount <= 5;
 
@@ -525,6 +676,12 @@ window.AppStore = {
         const priceElem = document.getElementById('detail-price');
         if (priceElem) priceElem.textContent = this.formatMoney(product.price);
         
+        const descElem = document.getElementById('detail-desc');
+        if (descElem) {
+            // Support HTML rendering for Quill descriptions
+            descElem.innerHTML = product.description || "";
+        }
+        
         // Hide size section if product.sizes is empty
         const sizeSection = document.getElementById('detail-size-section');
         const sizesGrid = document.getElementById('detail-sizes-grid');
@@ -643,13 +800,15 @@ window.AppStore = {
             }
         }
 
-        // Additional Product Views below hero image
+        // Additional Product Views below hero image (Editorial Mosaic)
         const gallerySection = document.getElementById('detail-quote-section');
         if (gallerySection) {
+            gallerySection.style.display = 'block';
+            const img1 = document.getElementById('detail-gallery-img-1');
+            const img2 = document.getElementById('detail-gallery-img-2');
+            const img3 = document.getElementById('detail-gallery-img-3');
+            
             if (product.galleryImages && product.galleryImages.length > 0) {
-                gallerySection.style.display = 'block';
-                const img1 = document.getElementById('detail-gallery-img-1');
-                const img2 = document.getElementById('detail-gallery-img-2');
                 if (img1 && product.galleryImages[0]) {
                     img1.src = product.galleryImages[0];
                     img1.loading = "lazy";
@@ -658,12 +817,16 @@ window.AppStore = {
                     img2.src = product.galleryImages[1];
                     img2.loading = "lazy";
                 }
+                if (img3) {
+                    // Fallback to Image 3 if exists, else fallback to Image 1 as a placeholder mosaic
+                    img3.src = product.galleryImages[2] || product.galleryImages[0];
+                    img3.loading = "lazy";
+                }
             } else {
-                gallerySection.style.display = 'block';
-                const img1 = document.getElementById('detail-gallery-img-1');
-                const img2 = document.getElementById('detail-gallery-img-2');
+                // Professional fallback mosaic
                 if (img1) img1.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuBzQvh6NVOC4B5O_zs6Woah1Kmo-sZJ1mOJPmuvmuJNFgsSrVqoML_VwQ2Zar-qRytjeBjs7i8oWdKSAUHikJfg8lNrVjYz6Z-htHEjjcLtS7kJeYIZrTRq1GBC-EGMv8zkuZ4wyu0o5y6Gdgu_XKzJDfJl8NpUnp5M9CW9BP7Dlclrrn42Fja_bga8wNmT_VaFPzrogBSe3Net8y5zGLIRbpuz2ZJZF5VIUjK9ViVUhSfZMDS6EokQFS2Nqp6pjXcDqZ9JxnQhA6s";
                 if (img2) img2.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuA8xVRnSAbfgaXL5ppat03aAyof9NPgHBPb2I9Gx9jqiQrv2-mpC7PirCOdIvTIbO7ASj73pPSqmSoij5FBEEpmNP1yJncO100pHBPvpJnaGRAwp8Yth446DfU2DcMxRoJOvCL11-L-7Jdnd46HKCTdyfU4iiz7hUQmp3pS7RGuSHMVyZ5M7wYvqSkY9wqgxoz4CHX5aAxy4YgwbezlWr1cu00o7nKssmTw_xEUYEjEl48KK3asbgHV0-IXvNldXRxtsRxe7OEEyw4";
+                if (img3) img3.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuCH1ZVRnSAbfgaXL5ppat03aAyof9NPgHBPb2I9Gx9jqiQrv2-mpC7PirCOdIvTIbO7ASj73pPSqmSoij5FBEEpmNP1yJncO100pHBPvpJnaGRAwp8Yth446DfU2DcMxRoJOvCL11-L-7Jdnd46HKCTdyfU4iiz7hUQmp3pS7RGuSHMVyZ5M7wYvqSkY9wqgxoz4CHX5aAxy4YgwbezlWr1cu00o7nKssmTw_xEUYEjEl48KK3asbgHV0-IXvNldXRxtsRxe7OEEyw4";
             }
         }
 
@@ -672,7 +835,18 @@ window.AppStore = {
              const videoPlayer = document.getElementById('detail-video-player');
              if (product.videoUrl && product.videoUrl.trim() !== '') {
                  videoSection.style.display = 'block';
-                 if (videoPlayer) videoPlayer.src = product.videoUrl;
+                 if (videoPlayer) {
+                     // Check if it's an IndexedDB reference
+                     if (product.videoUrl.startsWith('vid-')) {
+                         this.mediaDB.get(product.videoUrl).then(blob => {
+                             if (blob) {
+                                 videoPlayer.src = URL.createObjectURL(blob);
+                             }
+                         }).catch(err => console.error("Video load error:", err));
+                     } else {
+                         videoPlayer.src = product.videoUrl;
+                     }
+                 }
              } else {
                  videoSection.style.display = 'none';
              }
@@ -822,6 +996,7 @@ window.initStoreUI = function() {
             }
         });
     }
+
 };
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product - CURATOR</title>
+    <title>Add Product - VIBEPICK</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300,0&display=swap" rel="stylesheet">
@@ -12,10 +12,16 @@
             window.location.href = 'login.html';
         }
     </script>
+    <!-- Quill.js CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; background-color: #f9f9f9; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Manrope', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+        /* Quill custom styles */
+        .ql-container { font-family: 'Inter', sans-serif; font-size: 14px; height: 250px; background-color: #f9fafb; border: none !important; }
+        .ql-toolbar { border: none !important; border-bottom: 1px solid #f3f4f6 !important; background-color: #fff; }
+        .ql-editor.ql-blank::before { color: #9ca3af; font-style: normal; }
     </style>
 </head>
 <body class="text-gray-900 bg-gray-50 flex flex-col min-h-screen">
@@ -37,7 +43,7 @@
         <form id="add-product-form" class="bg-white p-6 sm:p-10 border border-gray-200 shadow-sm space-y-10">
             
             <div class="border-b border-gray-100 pb-6">
-                <h1 class="text-2xl font-bold tracking-tight mb-1">New Product Details</h1>
+                <h1 id="form-title" class="text-2xl font-bold tracking-tight mb-1">New Product Details</h1>
                 <p class="text-sm text-gray-500">Add mandatory information and pricing.</p>
             </div>
             
@@ -67,8 +73,10 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Short Description</label>
-                    <input type="text" id="add-desc" class="w-full bg-gray-50 border-none p-3 text-sm focus:ring-0 focus:border-b-2 focus:border-gray-900" required>
+                    <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Description *</label>
+                    <div class="border border-gray-200 overflow-hidden">
+                        <div id="editor"></div>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Sizes (Comma separated, optional)</label>
@@ -153,21 +161,49 @@
             </div>
 
             <div class="border-t border-gray-100 pt-8">
-                <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Video context URL (Optional iframe)</label>
-                <input type="url" id="add-video" placeholder="https://..." class="w-full bg-gray-50 border-none p-3 text-sm focus:ring-0 focus:border-b-2 focus:border-gray-900">
+                <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Video context (Up to 15MB)</label>
+                <div class="flex items-center gap-6">
+                    <div id="video-preview-box" class="w-32 h-32 bg-gray-100 flex items-center justify-center border border-gray-200 overflow-hidden shrink-0 relative">
+                        <span class="material-symbols-outlined text-gray-400">videocam</span>
+                        <video id="video-preview" class="hidden w-full h-full object-cover" muted loop autoplay></video>
+                        <button type="button" id="remove-video" class="hidden absolute top-1 right-1 bg-white/80 p-1 rounded-full shadow-sm hover:bg-white text-red-600 transition-colors">
+                            <span class="material-symbols-outlined text-xs">close</span>
+                        </button>
+                    </div>
+                    <div class="flex-grow">
+                        <input type="file" id="add-video-file" accept="video/*" class="w-full text-sm color-file">
+                        <p class="text-xs text-gray-500 mt-2">Maximum 15MB. MP4/MOV recommended.</p>
+                    </div>
+                </div>
             </div>
 
             <div class="pt-6">
                 <button type="submit" class="w-full bg-gray-900 text-white font-bold uppercase tracking-widest text-sm py-5 hover:bg-black transition-colors shadow-xl">
-                    Save Product & Return to Inventory
+                    <span id="save-btn-text">Save Product & Return to Inventory</span>
                 </button>
             </div>
         </form>
     </main>
 
     <script src="store.js"></script>
+    <!-- Quill.js Library -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        // Init Quill
+        const quill = new Quill('#editor', {
+            theme: 'snow',
+            placeholder: 'Start writing your product description...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, false] }],
+                    ['bold', 'italic', 'underline'],
+                    ['link', 'blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }]
+                ]
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
             const catSelect = document.getElementById('add-category');
             if (window.AppStore && catSelect) {
                 const renderOptions = () => {
@@ -184,7 +220,150 @@
                     }
                 });
             }
+
+            // --- EDIT MODE LOGIC ---
+            const params = new URLSearchParams(window.location.search);
+            const editId = params.get('edit');
+            window.isEditMode = false;
+
+            if (editId && window.AppStore) {
+                const product = window.AppStore.state.products.find(p => p.id === editId);
+                if (product) {
+                    window.isEditMode = true;
+                    window.editId = editId;
+                    document.getElementById('form-title').textContent = 'Edit Product';
+                    document.getElementById('save-btn-text').textContent = 'Update Product & Return';
+                    
+                    document.getElementById('add-name').value = product.name;
+                    document.getElementById('add-price').value = product.price;
+                    document.getElementById('add-stock').value = product.stockCount;
+                    document.getElementById('add-category').value = product.category;
+                    document.getElementById('add-sizes').value = (product.sizes || []).join(', ');
+
+                    // Sync Quill
+                    quill.root.innerHTML = product.description || '';
+
+                    // Pre-fill Thumbnail
+                    if (product.images && product.images[0]) {
+                        document.getElementById('add-thumbnail-base64').value = product.images[0];
+                        const thumbImg = document.getElementById('thumb-img');
+                        thumbImg.src = product.images[0];
+                        thumbImg.classList.remove('hidden');
+                        document.getElementById('thumb-preview-box').querySelector('.material-symbols-outlined').classList.add('hidden');
+                        // Edit doesn't strictly require file select if not changing
+                        document.getElementById('add-thumbnail').required = false;
+                    }
+
+                    // Pre-fill Gallery
+                    if (product.galleryImages) {
+                        const galleryUploads = document.querySelectorAll('.gallery-upload');
+                        product.galleryImages.forEach((img, idx) => {
+                            if (galleryUploads[idx]) {
+                                const wrapper = galleryUploads[idx].closest('div');
+                                wrapper.querySelector('.gallery-base64').value = img;
+                                const preview = wrapper.querySelector('.gallery-img');
+                                preview.src = img;
+                                preview.classList.remove('hidden');
+                                wrapper.querySelector('.material-symbols-outlined').classList.add('hidden');
+                            }
+                        });
+                    }
+
+                    // Pre-fill Video
+                    if (product.videoUrl) {
+                        const videoPreview = document.getElementById('video-preview');
+                        const removeVideoBtn = document.getElementById('remove-video');
+                        const videoPreviewBox = document.getElementById('video-preview-box');
+
+                        if (product.videoUrl.startsWith('vid-')) {
+                            const blob = await window.AppStore.mediaDB.get(product.videoUrl);
+                            if (blob) {
+                                videoPreview.src = URL.createObjectURL(blob);
+                            }
+                        } else {
+                            videoPreview.src = product.videoUrl;
+                        }
+                        videoPreview.classList.remove('hidden');
+                        removeVideoBtn.classList.remove('hidden');
+                        videoPreviewBox.querySelector('.material-symbols-outlined').classList.add('hidden');
+                    }
+
+                    // Pre-fill Colors
+                    if (product.colors) {
+                        product.colors.forEach(c => {
+                            addColorToUI(c.colorName, c.colorImage);
+                        });
+                    }
+
+                    // Pre-fill Details
+                    if (product.detailsList) {
+                        product.detailsList.forEach(d => {
+                            addDetailToUI(d.title, d.value);
+                        });
+                    }
+                }
+            }
         });
+
+        // Helper functions for pre-filling
+        function addDetailToUI(title = '', value = '') {
+            const container = document.getElementById('details-container');
+            const div = document.createElement('div');
+            div.className = 'flex gap-12 items-start relative detail-row mt-2';
+            div.innerHTML = `
+                <div class="w-1/3">
+                    <input type="text" value="${title}" placeholder="Title (e.g., Weight)" class="w-full bg-gray-50 border border-gray-200 p-2 text-sm focus:ring-0 focus:border-gray-900 tech-title" required>
+                </div>
+                <div class="flex-grow relative">
+                    <input type="text" value="${value}" placeholder="Value/Description" class="w-full bg-gray-50 border border-gray-200 p-2 text-sm focus:ring-0 focus:border-gray-900 tech-value" required>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="p-2 text-gray-400 hover:text-red-600 bg-gray-100 hover:bg-red-50 transition-colors">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        function addColorToUI(name = '', img = '') {
+            const container = document.getElementById('colors-container');
+            const div = document.createElement('div');
+            div.className = 'bg-white border text-sm border-gray-200 p-4 relative flex gap-4 items-center color-block';
+            div.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+                <div class="flex flex-col gap-3 flex-grow">
+                    <input type="text" value="${name}" placeholder="Color Name (e.g., Midnight Blue)" class="w-full bg-gray-50 border border-gray-200 p-2 text-sm focus:ring-0 focus:border-gray-900 color-name" required>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gray-100 flex items-center justify-center border shrink-0">
+                             <img class="${img ? '' : 'hidden'} w-full h-full object-cover color-img" src="${img}">
+                             <span class="material-symbols-outlined text-xs text-gray-400 icon ${img ? 'hidden' : ''}">image</span>
+                        </div>
+                        <input type="file" accept="image/*" class="w-full text-xs color-file transition-all" ${img ? '' : 'required'}>
+                        <input type="hidden" class="color-base64" value="${img}">
+                    </div>
+                </div>
+            `;
+            
+            const fileInput = div.querySelector('.color-file');
+            const hiddenInput = div.querySelector('.color-base64');
+            const imgPreview = div.querySelector('.color-img');
+            const icon = div.querySelector('.icon');
+
+            fileInput.addEventListener('change', (evt) => {
+                const f = evt.target.files[0];
+                if (f) {
+                    resizeImageFile(f, 600, 600, (base64) => {
+                        hiddenInput.value = base64;
+                        imgPreview.src = base64;
+                        imgPreview.classList.remove('hidden');
+                        icon.classList.add('hidden');
+                    });
+                }
+            });
+
+            container.appendChild(div);
+        }
 
         // Img Downscaler (Canvas)
         function resizeImageFile(file, maxWidth, maxHeight, callback) {
@@ -233,6 +412,40 @@
             }
         });
 
+        // Video Upload Handler (15MB Limit)
+        const videoInput = document.getElementById('add-video-file');
+        const videoPreview = document.getElementById('video-preview');
+        const videoPreviewBox = document.getElementById('video-preview-box');
+        const removeVideoBtn = document.getElementById('remove-video');
+        let selectedVideoBlob = null;
+
+        videoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 15 * 1024 * 1024) {
+                    alert("File too large. Maximum size is 15MB.");
+                    videoInput.value = '';
+                    return;
+                }
+                
+                selectedVideoBlob = file;
+                const url = URL.createObjectURL(file);
+                videoPreview.src = url;
+                videoPreview.classList.remove('hidden');
+                removeVideoBtn.classList.remove('hidden');
+                videoPreviewBox.querySelector('.material-symbols-outlined').classList.add('hidden');
+            }
+        });
+
+        removeVideoBtn.addEventListener('click', () => {
+            selectedVideoBlob = null;
+            videoPreview.src = '';
+            videoPreview.classList.add('hidden');
+            removeVideoBtn.classList.add('hidden');
+            videoPreviewBox.querySelector('.material-symbols-outlined').classList.remove('hidden');
+            videoInput.value = '';
+        });
+
         // Gallery Handlers
         document.querySelectorAll('.gallery-upload').forEach((input, index) => {
             input.addEventListener('change', (e) => {
@@ -253,67 +466,16 @@
 
         // Add Dynamic Detail Row
         document.getElementById('btn-add-detail').addEventListener('click', () => {
-            const container = document.getElementById('details-container');
-            const div = document.createElement('div');
-            div.className = 'flex gap-12 items-start relative detail-row mt-2';
-            div.innerHTML = `
-                <div class="w-1/3">
-                    <input type="text" placeholder="Title (e.g., Weight)" class="w-full bg-gray-50 border border-gray-200 p-2 text-sm focus:ring-0 focus:border-gray-900 tech-title" required>
-                </div>
-                <div class="flex-grow relative">
-                    <input type="text" placeholder="Value/Description" class="w-full bg-gray-50 border border-gray-200 p-2 text-sm focus:ring-0 focus:border-gray-900 tech-value" required>
-                </div>
-                <button type="button" onclick="this.parentElement.remove()" class="p-2 text-gray-400 hover:text-red-600 bg-gray-100 hover:bg-red-50 transition-colors">
-                    <span class="material-symbols-outlined text-sm">delete</span>
-                </button>
-            `;
-            container.appendChild(div);
+            addDetailToUI();
         });
 
         // Add Dynamic Color Row
         document.getElementById('btn-add-color').addEventListener('click', () => {
-            const container = document.getElementById('colors-container');
-            const div = document.createElement('div');
-            div.className = 'bg-white border text-sm border-gray-200 p-4 relative flex gap-4 items-center';
-            div.innerHTML = `
-                <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
-                    <span class="material-symbols-outlined text-sm">close</span>
-                </button>
-                <div class="flex flex-col gap-3 flex-grow">
-                    <input type="text" placeholder="Color Name (e.g., Midnight Blue)" class="w-full bg-gray-50 border border-gray-200 p-2 text-sm focus:ring-0 focus:border-gray-900 color-name" required>
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-gray-100 flex items-center justify-center border shrink-0">
-                             <img class="hidden w-full h-full object-cover color-img" src="">
-                             <span class="material-symbols-outlined text-xs text-gray-400 icon">image</span>
-                        </div>
-                        <input type="file" accept="image/*" class="w-full text-xs color-file" required>
-                        <input type="hidden" class="color-base64">
-                    </div>
-                </div>
-            `;
-            
-            const fileInput = div.querySelector('.color-file');
-            const hiddenInput = div.querySelector('.color-base64');
-            const imgPreview = div.querySelector('.color-img');
-            const icon = div.querySelector('.icon');
-
-            fileInput.addEventListener('change', (evt) => {
-                const f = evt.target.files[0];
-                if (f) {
-                    resizeImageFile(f, 600, 600, (base64) => {
-                        hiddenInput.value = base64;
-                        imgPreview.src = base64;
-                        imgPreview.classList.remove('hidden');
-                        icon.classList.add('hidden');
-                    });
-                }
-            });
-
-            container.appendChild(div);
+            addColorToUI();
         });
 
         // Handle form submit
-        document.getElementById('add-product-form').addEventListener('submit', (e) => {
+        document.getElementById('add-product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             // Validate thumbnail
@@ -353,24 +515,31 @@
             const sizesRaw = document.getElementById('add-sizes').value;
             const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
 
+            // Get Quill content
+            const descriptionHtml = quill.root.innerHTML;
+
             const product = {
                 name: document.getElementById('add-name').value.trim(),
-                description: document.getElementById('add-desc').value.trim(),
+                description: descriptionHtml,
                 price: parseFloat(document.getElementById('add-price').value),
                 stockCount: parseInt(document.getElementById('add-stock').value),
                 category: document.getElementById('add-category').value,
                 images: [thumbBase64],
                 sizes: sizes,
-                videoUrl: document.getElementById('add-video').value.trim(),
+                videoFile: selectedVideoBlob,
                 colors: colorsArray,
                 detailsList: detailsList,
                 galleryImages: galleryImages
             };
 
             try {
-                window.AppStore.addNewProduct(product);
-                // Success redirect
-                alert("Product added successfully!");
+                if (window.isEditMode) {
+                    await window.AppStore.updateProduct(window.editId, product);
+                    alert("Product updated successfully!");
+                } else {
+                    await window.AppStore.addNewProduct(product);
+                    alert("Product added successfully!");
+                }
                 window.location.href = 'admin.html?module=inventory';
             } catch (err) {
                 console.error(err);
