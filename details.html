@@ -192,13 +192,15 @@
             console.log('--- REBUILD: Performing Direct Injection ---');
             
             const urlParams = new URLSearchParams(window.location.search);
-            const productId = urlParams.get('id');
+            const pid = urlParams.get('id'); // Attempt to get ID from 'id' param
             const products = JSON.parse(localStorage.getItem('app_products') || '[]');
-            const product = products.find(p => p.id === productId);
+            
+            // Search logic: Match by ID OR Name (decoded)
+            const product = products.find(p => p.id === pid || p.name === decodeURIComponent(pid));
 
             if (!product) {
-                console.error('CRITICAL: Product vibe not found.');
-                alert("Product data not found in storage");
+                console.warn('Sync Alert: Product data not found in storage for:', pid);
+                alert("Product data not found in storage. Ensure the ID or Name is correct.");
                 window.location.href = 'index.html';
                 return;
             }
@@ -208,9 +210,11 @@
             document.getElementById('display-name').textContent = product.name;
             document.getElementById('display-price').textContent = `৳${product.price}`;
             
-            // [2] Description Area (Using innerHTML for Quill data)
-            const descHtml = product.description || `<p class="italic opacity-50">Experimental design. Visual story pending refinement for ${product.name}.</p>`;
-            document.getElementById('product-description').innerHTML = descHtml;
+            // [2] Description Area (FORCE VISIBILITY + innerHTML)
+            const descContainer = document.getElementById('product-description');
+            descContainer.classList.remove('hidden', 'invisible');
+            descContainer.style.display = 'block';
+            descContainer.innerHTML = product.description || `<p class="italic opacity-50">Story for ${product.name} is currently being curated.</p>`;
 
             // [3] Main visual Area & Thumb Gal Bar
             const visualArea = document.getElementById('main-visual-area');
@@ -232,14 +236,16 @@
                 thumbBar.style.display = 'none';
             }
 
-            // [4] Refined Details Sidebar (Mapping product.detailsList)
+            // [4] Refined Details Sidebar (FORCE VISIBILITY + Loop Injection)
             const refineDetailsList = document.getElementById('refine-details');
+            refineDetailsList.classList.remove('hidden', 'invisible');
             if (product.detailsList && Array.isArray(product.detailsList)) {
-                refineDetailsList.innerHTML = product.detailsList.map(item => `<li>${item}</li>`).join('');
+                // Precise mapping for the details list
+                refineDetailsList.innerHTML = product.detailsList.map(item => `<li>${item.value || item}</li>`).join('');
             } else if (product.refinedDetails) {
                  refineDetailsList.innerHTML = `<li>${product.refinedDetails}</li>`;
             } else {
-                refineDetailsList.innerHTML = '<li>Universal design specifications.</li><li>Crafted for durability.</li>';
+                refineDetailsList.innerHTML = '<li>Crafted for durability.</li><li>Universal design specifications.</li>';
             }
 
             // [5] Variant Construction

@@ -295,7 +295,7 @@ window.AppStore = {
             return obj;
         };
 
-        const prodId = `prod-${Date.now()}`;
+        const prodId = productData.id || `prod-${Date.now()}`;
         
         // Handle Video Upload (IndexedDB)
         if (productData.videoFile instanceof Blob) {
@@ -308,8 +308,8 @@ window.AppStore = {
         const safeProduct = sanitizeObj(productData);
 
         this.state.products.unshift({
-            id: prodId,
-            ...safeProduct
+            ...safeProduct,
+            id: prodId
         });
         this.saveState();
     },

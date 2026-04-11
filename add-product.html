@@ -519,7 +519,10 @@
             // Get Quill content
             const descriptionHtml = quill.root.innerHTML;
 
+            const productId = window.isEditMode ? window.editId : 'prod_' + Date.now();
+
             const product = {
+                id: productId,
                 name: document.getElementById('add-name').value.trim(),
                 description: descriptionHtml,
                 price: parseFloat(document.getElementById('add-price').value),
