@@ -1,3 +1,4 @@
+console.log('DEBUG: store.js loaded');
 const defaultProducts = [];
 
 // --- SAFE INITIALIZATION ---

@@ -218,7 +218,7 @@
         <div class="md:w-2/3">
             <div id="tab-pane-description" class="tab-content-panel animate-fade-in">
                 <div id="product-description" class="rich-text text-lg text-on-surface-variant font-light leading-relaxed">
-                    <!-- Loaded from Product Data -->
+                    <p id="fallback-desc" style="color:red; font-weight: bold; margin-bottom: 1rem;">Status: Initializing Details Script...</p>
                 </div>
             </div>
 
@@ -329,6 +329,49 @@
         </button>
 </div>
 
+
+<script>
+    console.log('DEBUG: Script in details.html started');
+    
+    function emergencyInject() {
+        console.log('DEBUG: Running emergencyInject');
+        const params = new URLSearchParams(window.location.search);
+        const pid = params.get('id');
+        
+        try {
+            const raw = localStorage.getItem('app_products');
+            if (!raw) {
+                console.warn('DEBUG: No app_products in localStorage');
+                return;
+            }
+            const products = JSON.parse(raw);
+            const product = products.find(p => p.id === pid);
+            
+            if (product) {
+                console.log('DEBUG: Emergency product found', product);
+                const descBox = document.getElementById('product-description');
+                if (descBox) {
+                    if (product.description && product.description.length > 10) {
+                        descBox.innerHTML = product.description;
+                        console.log('DEBUG: Emergency injection SUCCESS');
+                    } else {
+                        descBox.innerHTML = '<p style="color:orange;">DEBUG: Data exists but description is empty or too short.</p>';
+                        console.log('DEBUG: Description field is empty');
+                    }
+                }
+            } else {
+                console.warn('DEBUG: Product not found for ID', pid);
+            }
+        } catch (e) {
+            console.error('DEBUG: Emergency script crashed', e);
+        }
+    }
+
+    // Attempt injection across various lifecycle events for maximum reliability
+    emergencyInject();
+    window.addEventListener('load', emergencyInject);
+    document.addEventListener('DOMContentLoaded', emergencyInject);
+</script>
 
 <script src="store.js"></script>
 <script src="router.js"></script>
