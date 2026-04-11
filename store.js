@@ -677,12 +677,9 @@ window.AppStore = {
         const priceElem = document.getElementById('detail-price');
         if (priceElem) priceElem.textContent = this.formatMoney(product.price);
         
-        const descElem = document.getElementById('detail-desc');
-        if (descElem) {
-            // Support HTML rendering for Quill descriptions
-            descElem.innerHTML = product.description || "";
-        }
-        
+        // Data Verification (Requested by User)
+        console.log('Rendering Product Details:', product);
+
         // Hide size section if product.sizes is empty
         const sizeSection = document.getElementById('detail-size-section');
         const sizesGrid = document.getElementById('detail-sizes-grid');
@@ -734,66 +731,75 @@ window.AppStore = {
             }
         }
 
-        // Refine Details (Tabbed Interface)
+        // Refine Details (Tabbed Interface Logic)
         const extrasSection = document.getElementById('detail-extras-section');
-        const specsGrid = document.getElementById('detail-features-grid');
+        const specsGrid = document.getElementById('product-specifications');
         const tabButtons = document.querySelectorAll('.detail-tab-toggle');
         const tabPanes = document.querySelectorAll('.tab-content-panel');
+        const descElem = document.getElementById('product-description');
+
+        if (descElem) {
+            descElem.innerHTML = product.description || "The story for this product is coming soon.";
+        }
 
         if (extrasSection) {
-            // Always show the section if we have a description
-            extrasSection.style.display = product.description ? 'block' : 'none';
+            const hasDescription = !!product.description;
+            const hasSpecs = (product.detailsList && product.detailsList.length > 0);
+            const hasFeatures = (product.features && product.features.length > 0);
 
-            // Populate Specs Grid
+            // Show section if any extra data exists
+            extrasSection.style.display = (hasDescription || hasSpecs || hasFeatures) ? 'block' : 'none';
+
+            // Populate Specs Content
             if (specsGrid) {
                 specsGrid.innerHTML = '';
-                const details = product.detailsList || [];
-                const features = product.features || [];
-
-                if (details.length > 0) {
-                    details.forEach(d => {
+                if (hasSpecs) {
+                    product.detailsList.forEach(d => {
                         const li = document.createElement('li');
-                        li.className = 'flex flex-col gap-1 border-b border-outline-variant/10 pb-3';
+                        li.className = 'flex flex-col gap-1 border-b border-outline-variant/20 pb-4';
                         li.innerHTML = `
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">${d.title}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">${d.title}</span>
                             <span class="text-xs font-semibold text-on-surface">${d.value}</span>
                         `;
                         specsGrid.appendChild(li);
                     });
-                } else if (features.length > 0) {
-                    features.forEach(f => {
+                } else if (hasFeatures) {
+                    product.features.forEach(f => {
                         const li = document.createElement('li');
-                        li.className = 'flex items-center gap-3 text-xs text-on-surface-variant font-medium';
+                        li.className = 'flex items-start gap-3 text-xs text-on-surface-variant font-medium';
                         li.innerHTML = `
-                            <span class="material-symbols-outlined text-[14px] text-secondary">check_circle</span>
-                            <span>${f}</span>
+                            <span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+                            <span class="leading-relaxed">${f}</span>
                         `;
                         specsGrid.appendChild(li);
                     });
                 } else {
-                    // Hide specs tab if no specs
-                    const specsBtn = document.querySelector('[data-tab="specs"]');
-                    if (specsBtn) specsBtn.style.display = 'none';
+                    // Fallback empty message for specs tab
+                    specsGrid.innerHTML = '<p class="text-xs text-on-surface-variant opacity-50 italic">Technical specifications are not available for this item.</p>';
                 }
             }
 
-            // Tab Switching Logic
+            // Tab Switching Interactions
             tabButtons.forEach(btn => {
                 btn.onclick = () => {
                     const tabId = btn.getAttribute('data-tab');
                     
-                    // Update Buttons UI
+                    // Reset all buttons to inactive
                     tabButtons.forEach(b => {
                         const span = b.querySelector('span:first-child');
                         if (span) span.classList.add('opacity-40');
                     });
+                    
+                    // Set current button to active
                     const activeSpan = btn.querySelector('span:first-child');
                     if (activeSpan) activeSpan.classList.remove('opacity-40');
 
-                    // Show correct pane
+                    // Show correct pane with animation
                     tabPanes.forEach(pane => {
                         pane.classList.add('hidden');
-                        if (pane.id === `tab-pane-${tabId}`) pane.classList.remove('hidden');
+                        if (pane.id === `tab-pane-${tabId}`) {
+                            pane.classList.remove('hidden');
+                        }
                     });
                 };
             });
