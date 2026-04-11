@@ -758,10 +758,10 @@ window.AppStore = {
             // Populate Specifications Tab
             if (refinedDetailsElem) {
                 refinedDetailsElem.innerHTML = '';
+                refinedDetailsElem.classList.remove('hidden'); // Force visibility per user request
                 
-                if (hasDirectSpecs) {
-                    refinedDetailsElem.innerHTML = product.refinedDetails;
-                } else if (hasSpecs) {
+                // Prioritize detailsList as per user request
+                if (hasSpecs) {
                     // Render the structured list (Matches add-product.html schema)
                     product.detailsList.forEach(d => {
                         const li = document.createElement('li');
@@ -772,6 +772,8 @@ window.AppStore = {
                         `;
                         refinedDetailsElem.appendChild(li);
                     });
+                } else if (hasDirectSpecs) {
+                    refinedDetailsElem.innerHTML = product.refinedDetails;
                 } else if (hasFeatures) {
                     product.features.forEach(f => {
                         const li = document.createElement('li');
