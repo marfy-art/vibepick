@@ -733,27 +733,36 @@ window.AppStore = {
 
         // Refine Details (Tabbed Interface Logic)
         const extrasSection = document.getElementById('detail-extras-section');
-        const specsGrid = document.getElementById('product-specifications');
+        const refinedDetailsElem = document.getElementById('refined-details');
         const tabButtons = document.querySelectorAll('.detail-tab-toggle');
         const tabPanes = document.querySelectorAll('.tab-content-panel');
         const descElem = document.getElementById('product-description');
 
         if (descElem) {
+            console.log('Injecting Description:', product.description ? 'Data found' : 'Empty');
             descElem.innerHTML = product.description || "The story for this product is coming soon.";
         }
 
         if (extrasSection) {
             const hasDescription = !!product.description;
-            const hasSpecs = (product.detailsList && product.detailsList.length > 0);
+            const hasStructuredSpecs = (product.detailsList && product.detailsList.length > 0);
+            const hasDirectSpecs = !!product.refinedDetails;
             const hasFeatures = (product.features && product.features.length > 0);
 
-            // Show section if any extra data exists
-            extrasSection.style.display = (hasDescription || hasSpecs || hasFeatures) ? 'block' : 'none';
+            console.log('Data Presence Check:', { hasDescription, hasStructuredSpecs, hasDirectSpecs, hasFeatures });
 
-            // Populate Specs Content
-            if (specsGrid) {
-                specsGrid.innerHTML = '';
-                if (hasSpecs) {
+            // Always show the section if we have any data to show
+            extrasSection.style.display = (hasDescription || hasStructuredSpecs || hasDirectSpecs || hasFeatures) ? 'block' : 'none';
+
+            // Populate Specifications Tab
+            if (refinedDetailsElem) {
+                refinedDetailsElem.innerHTML = '';
+                
+                if (hasDirectSpecs) {
+                    // Inject direct HTML/String if provided
+                    refinedDetailsElem.innerHTML = product.refinedDetails;
+                } else if (hasStructuredSpecs) {
+                    // Render the structured list
                     product.detailsList.forEach(d => {
                         const li = document.createElement('li');
                         li.className = 'flex flex-col gap-1 border-b border-outline-variant/20 pb-4';
@@ -761,9 +770,10 @@ window.AppStore = {
                             <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">${d.title}</span>
                             <span class="text-xs font-semibold text-on-surface">${d.value}</span>
                         `;
-                        specsGrid.appendChild(li);
+                        refinedDetailsElem.appendChild(li);
                     });
                 } else if (hasFeatures) {
+                    // Render simple features list
                     product.features.forEach(f => {
                         const li = document.createElement('li');
                         li.className = 'flex items-start gap-3 text-xs text-on-surface-variant font-medium';
@@ -771,11 +781,10 @@ window.AppStore = {
                             <span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
                             <span class="leading-relaxed">${f}</span>
                         `;
-                        specsGrid.appendChild(li);
+                        refinedDetailsElem.appendChild(li);
                     });
                 } else {
-                    // Fallback empty message for specs tab
-                    specsGrid.innerHTML = '<p class="text-xs text-on-surface-variant opacity-50 italic">Technical specifications are not available for this item.</p>';
+                    refinedDetailsElem.innerHTML = '<p class="text-xs text-on-surface-variant opacity-50 italic">Full specifications are pending update for this edition.</p>';
                 }
             }
 
@@ -783,23 +792,15 @@ window.AppStore = {
             tabButtons.forEach(btn => {
                 btn.onclick = () => {
                     const tabId = btn.getAttribute('data-tab');
-                    
-                    // Reset all buttons to inactive
                     tabButtons.forEach(b => {
                         const span = b.querySelector('span:first-child');
                         if (span) span.classList.add('opacity-40');
                     });
-                    
-                    // Set current button to active
                     const activeSpan = btn.querySelector('span:first-child');
                     if (activeSpan) activeSpan.classList.remove('opacity-40');
-
-                    // Show correct pane with animation
                     tabPanes.forEach(pane => {
                         pane.classList.add('hidden');
-                        if (pane.id === `tab-pane-${tabId}`) {
-                            pane.classList.remove('hidden');
-                        }
+                        if (pane.id === `tab-pane-${tabId}`) pane.classList.remove('hidden');
                     });
                 };
             });
