@@ -734,71 +734,69 @@ window.AppStore = {
             }
         }
 
-        // Refine Details (Technical Specs Grid)
-        const featuresGrid = document.getElementById('detail-features-grid');
+        // Refine Details (Tabbed Interface)
         const extrasSection = document.getElementById('detail-extras-section');
-        const tabsMenu = document.getElementById('detail-tabs-menu');
-        const secondaryDescEl = document.getElementById('detail-desc-secondary');
+        const specsGrid = document.getElementById('detail-features-grid');
+        const tabButtons = document.querySelectorAll('.detail-tab-toggle');
+        const tabPanes = document.querySelectorAll('.tab-content-panel');
 
-        if (extrasSection && secondaryDescEl) {
-            if (product.detailsList && product.detailsList.length > 0) {
-                extrasSection.style.display = 'block';
-                if (tabsMenu) {
-                    tabsMenu.style.display = 'block';
-                    tabsMenu.textContent = '';
-                    const h2 = document.createElement('h2');
-                    h2.className = "text-3xl font-headline font-bold tracking-tighter mb-8";
-                    h2.textContent = "Refined Details";
-                    tabsMenu.appendChild(h2);
-                }
-                secondaryDescEl.textContent = product.description || "";
-                
-                if (featuresGrid) {
-                    featuresGrid.style.display = 'grid';
-                    featuresGrid.textContent = '';
-                    product.detailsList.forEach(d => {
+        if (extrasSection) {
+            // Always show the section if we have a description
+            extrasSection.style.display = product.description ? 'block' : 'none';
+
+            // Populate Specs Grid
+            if (specsGrid) {
+                specsGrid.innerHTML = '';
+                const details = product.detailsList || [];
+                const features = product.features || [];
+
+                if (details.length > 0) {
+                    details.forEach(d => {
                         const li = document.createElement('li');
-                        li.className = 'flex flex-col gap-1 border-b border-gray-200 pb-2 mt-2';
-                        
-                        const titleSpan = document.createElement('span');
-                        titleSpan.className = 'font-bold tracking-widest text-[10px] uppercase text-on-surface-variant';
-                        titleSpan.textContent = d.title;
-                        
-                        const valueSpan = document.createElement('span');
-                        valueSpan.className = 'text-sm text-on-surface';
-                        valueSpan.textContent = d.value;
-                        
-                        li.appendChild(titleSpan);
-                        li.appendChild(valueSpan);
-                        featuresGrid.appendChild(li);
+                        li.className = 'flex flex-col gap-1 border-b border-outline-variant/10 pb-3';
+                        li.innerHTML = `
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">${d.title}</span>
+                            <span class="text-xs font-semibold text-on-surface">${d.value}</span>
+                        `;
+                        specsGrid.appendChild(li);
                     });
-                }
-            } else if (product.features && product.features.length > 0) {
-                extrasSection.style.display = 'block';
-                if (tabsMenu) tabsMenu.style.display = 'none';
-                secondaryDescEl.textContent = product.description || "";
-                if (featuresGrid) {
-                    featuresGrid.style.display = 'grid';
-                    featuresGrid.textContent = '';
-                    product.features.forEach(f => {
+                } else if (features.length > 0) {
+                    features.forEach(f => {
                         const li = document.createElement('li');
-                        li.className = 'flex items-start gap-4';
-                        
-                        const check = document.createElement('span');
-                        check.className = 'material-symbols-outlined text-secondary';
-                        check.textContent = 'check_circle';
-                        
-                        const txt = document.createElement('span');
-                        txt.textContent = f;
-                        
-                        li.appendChild(check);
-                        li.appendChild(txt);
-                        featuresGrid.appendChild(li);
+                        li.className = 'flex items-center gap-3 text-xs text-on-surface-variant font-medium';
+                        li.innerHTML = `
+                            <span class="material-symbols-outlined text-[14px] text-secondary">check_circle</span>
+                            <span>${f}</span>
+                        `;
+                        specsGrid.appendChild(li);
                     });
+                } else {
+                    // Hide specs tab if no specs
+                    const specsBtn = document.querySelector('[data-tab="specs"]');
+                    if (specsBtn) specsBtn.style.display = 'none';
                 }
-            } else {
-                extrasSection.style.display = 'none';
             }
+
+            // Tab Switching Logic
+            tabButtons.forEach(btn => {
+                btn.onclick = () => {
+                    const tabId = btn.getAttribute('data-tab');
+                    
+                    // Update Buttons UI
+                    tabButtons.forEach(b => {
+                        const span = b.querySelector('span:first-child');
+                        if (span) span.classList.add('opacity-40');
+                    });
+                    const activeSpan = btn.querySelector('span:first-child');
+                    if (activeSpan) activeSpan.classList.remove('opacity-40');
+
+                    // Show correct pane
+                    tabPanes.forEach(pane => {
+                        pane.classList.add('hidden');
+                        if (pane.id === `tab-pane-${tabId}`) pane.classList.remove('hidden');
+                    });
+                };
+            });
         }
 
         // Additional Product Views below hero image (Editorial Mosaic)

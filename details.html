@@ -192,35 +192,62 @@
 </div>
 </div>
 </section>
-<!-- Detailed Description Tabs -->
-<section id="detail-extras-section" class="max-w-screen-xl mx-auto px-8 py-32" style="display: none;">
-<div class="grid grid-cols-1 md:grid-cols-12 gap-16">
-<div id="detail-tabs-menu" class="md:col-span-4" style="display: none;">
-<h2 class="text-3xl font-headline font-bold tracking-tighter mb-8">Refined details for the modern collector.</h2>
-<div class="space-y-4">
-<button data-tab="craftsmanship" class="detail-tab-btn flex items-center gap-4 text-on-surface font-bold uppercase tracking-widest text-xs border-b-2 border-on-surface pb-4 w-full text-left">
-<span class="w-1 h-1 bg-secondary indicator"></span>
-                            The Craftsmanship
-                        </button>
-<button data-tab="sustainability" class="detail-tab-btn flex items-center gap-4 text-on-surface-variant font-medium uppercase tracking-widest text-xs border-b border-outline-variant/20 pb-4 w-full text-left hover:text-on-surface transition-colors">
-<span class="w-1 h-1 bg-transparent indicator"></span>
-                            Sustainability
-                        </button>
-<button data-tab="fitFabric" class="detail-tab-btn flex items-center gap-4 text-on-surface-variant font-medium uppercase tracking-widest text-xs border-b border-outline-variant/20 pb-4 w-full text-left hover:text-on-surface transition-colors">
-<span class="w-1 h-1 bg-transparent indicator"></span>
-                            Fit & Fabric
-                        </button>
-</div>
-</div>
-<div class="md:col-span-8">
-                <div id="detail-desc" class="rich-text text-lg text-on-surface-variant mb-8 font-light animate-fade-in">
-                    <!-- Loaded from Quill RTE -->
+<!-- Detailed Description & Refined Details -->
+<section id="detail-extras-section" class="max-w-screen-xl mx-auto px-8 py-24 md:py-32">
+    <div class="flex flex-col md:flex-row gap-16">
+        <!-- Sticky Sidebar for Modern Feel -->
+        <div class="md:w-1/3">
+            <h2 class="text-3xl font-headline font-extrabold tracking-tighter leading-tight mb-8">Craftsmanship & Specifications</h2>
+            <div class="flex flex-col gap-4" id="detail-tabs-nav">
+                <button data-tab="description" class="detail-tab-toggle flex items-center justify-between group py-4 border-b border-outline-variant/30 text-left">
+                    <span class="text-xs font-bold uppercase tracking-widest transition-all group-hover:pl-2">Product Story</span>
+                    <span class="material-symbols-outlined text-xs transform transition-transform group-active:translate-x-1">arrow_forward_ios</span>
+                </button>
+                <button data-tab="specs" class="detail-tab-toggle flex items-center justify-between group py-4 border-b border-outline-variant/30 text-left">
+                    <span class="text-xs font-bold uppercase tracking-widest opacity-40 transition-all group-hover:pl-2">Refined Details</span>
+                    <span class="material-symbols-outlined text-xs transform transition-transform group-active:translate-x-1">arrow_forward_ios</span>
+                </button>
+                <button data-tab="shipping" class="detail-tab-toggle flex items-center justify-between group py-4 border-b border-outline-variant/30 text-left">
+                    <span class="text-xs font-bold uppercase tracking-widest opacity-40 transition-all group-hover:pl-2">Care & Delivery</span>
+                    <span class="material-symbols-outlined text-xs transform transition-transform group-active:translate-x-1">arrow_forward_ios</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="md:w-2/3">
+            <div id="tab-pane-description" class="tab-content-panel animate-fade-in">
+                <div id="detail-desc" class="rich-text text-lg text-on-surface-variant font-light leading-relaxed">
+                    <!-- Loaded from Product Data -->
                 </div>
-<ul id="detail-features-grid" class="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-8 text-sm w-full" style="display: none;">
-<!-- Bullet points dynamic -->
-</ul>
-</div>
-</div>
+            </div>
+
+            <div id="tab-pane-specs" class="tab-content-panel hidden animate-fade-in">
+                <ul id="detail-features-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 w-full">
+                    <!-- Loaded from Product Data -->
+                </ul>
+            </div>
+
+            <div id="tab-pane-shipping" class="tab-content-panel hidden animate-fade-in">
+                <div class="space-y-8">
+                    <div class="p-8 bg-surface-container-low border border-outline-variant/10 rounded-lg">
+                        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary mb-4">Handling Instruction</h4>
+                        <p class="text-sm text-on-surface-variant leading-relaxed">To maintain the premium quality of your VibePick garment, we recommend professional dry clean only. Avoid direct exposure to prolonged sunlight and store in a breathable garment bag.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-[10px] font-bold uppercase tracking-widest mb-2 text-on-surface">Standard Shipping</h4>
+                            <p class="text-xs text-on-surface-variant">2-4 business days within Dhaka. 5-7 days nationwide.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-[10px] font-bold uppercase tracking-widest mb-2 text-on-surface">Returns Policy</h4>
+                            <p class="text-xs text-on-surface-variant">Complimentary returns within 7 days of delivery for unworn items with original tags.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 <!-- Gallery Section -->
 <section id="detail-quote-section" class="max-w-screen-2xl mx-auto px-8 mb-32" style="display: none;">
