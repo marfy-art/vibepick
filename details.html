@@ -198,6 +198,7 @@
 
             if (!product) {
                 console.error('CRITICAL: Product vibe not found.');
+                alert("Product data not found in storage");
                 window.location.href = 'index.html';
                 return;
             }
@@ -207,7 +208,7 @@
             document.getElementById('display-name').textContent = product.name;
             document.getElementById('display-price').textContent = `৳${product.price}`;
             
-            // [2] Description Area (Rich text with fallback-desc mechanism)
+            // [2] Description Area (Using innerHTML for Quill data)
             const descHtml = product.description || `<p class="italic opacity-50">Experimental design. Visual story pending refinement for ${product.name}.</p>`;
             document.getElementById('product-description').innerHTML = descHtml;
 
@@ -231,10 +232,12 @@
                 thumbBar.style.display = 'none';
             }
 
-            // [4] Refined Details Sidebar
+            // [4] Refined Details Sidebar (Mapping product.detailsList)
             const refineDetailsList = document.getElementById('refine-details');
-            if (product.detailsList && product.detailsList.length > 0) {
+            if (product.detailsList && Array.isArray(product.detailsList)) {
                 refineDetailsList.innerHTML = product.detailsList.map(item => `<li>${item}</li>`).join('');
+            } else if (product.refinedDetails) {
+                 refineDetailsList.innerHTML = `<li>${product.refinedDetails}</li>`;
             } else {
                 refineDetailsList.innerHTML = '<li>Universal design specifications.</li><li>Crafted for durability.</li>';
             }

@@ -391,7 +391,7 @@ window.AppStore = {
     renderAll() {
         this.renderCartSidebar();
         this.renderProductsList();
-        this.renderProductDetails();
+        // this.renderProductDetails(); // Replaced by manual injection in details.html
         this.updateCartBadges();
         this.renderOrderSummaryIfCheckout();
     },
