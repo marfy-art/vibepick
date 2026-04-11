@@ -116,6 +116,7 @@
                 otpError.classList.add('hidden');
                 // Set Admin Session
                 localStorage.setItem('vibepick_admin_session', 'active');
+                localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('isAdmin', 'true'); // Backward compatibility
                 window.location.href = 'admin.html';
             } else {

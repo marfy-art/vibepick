@@ -3,7 +3,7 @@
 <head>
     <script>
         // STRICT ADMIN PROTECTION
-        if (localStorage.getItem('vibepick_admin_session') !== 'active') {
+        if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('vibepick_admin_session') !== 'active') {
             window.location.href = 'login.html';
         }
     </script>
@@ -361,6 +361,7 @@
         document.getElementById('logout-btn').addEventListener('click', () => {
             sessionStorage.removeItem('isAdmin');
             localStorage.removeItem('isAdmin');
+            localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('vibepick_admin_session');
             window.location.href = 'index.html';
         });
