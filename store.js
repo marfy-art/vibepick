@@ -678,7 +678,7 @@ window.AppStore = {
         if (priceElem) priceElem.textContent = this.formatMoney(product.price);
         
         // Data Verification (Requested by User)
-        console.log('Rendering Product Details:', product);
+        console.log('DEBUG - Product Data:', product);
 
         // Hide size section if product.sizes is empty
         const sizeSection = document.getElementById('detail-size-section');
@@ -736,23 +736,31 @@ window.AppStore = {
         const refinedDetailsElem = document.getElementById('refined-details');
         const tabButtons = document.querySelectorAll('.detail-tab-toggle');
         const tabPanes = document.querySelectorAll('.tab-content-panel');
-        const descElem = document.getElementById('product-description');
-
         if (descElem) {
-            console.log('Injecting Description:', product.description ? 'Data found' : 'Empty');
-            descElem.innerHTML = product.description || "The story for this product is coming soon.";
+            const cleanDesc = product.description ? product.description.replace(/<p><br><\/p>/g, '').trim() : '';
+            console.log('DEBUG - Clean Description Check:', cleanDesc ? 'Exists' : 'Empty/Placeholder');
+            
+            if (!cleanDesc || cleanDesc === '<p></p>') {
+                descElem.innerHTML = `<div class="p-8 border-2 border-dashed border-outline-variant/20 text-center">
+                    <p class="text-sm italic text-on-surface-variant opacity-60">The story for this collector's item is being refined. Check back soon for the full artisan details.</p>
+                </div>`;
+            } else {
+                descElem.innerHTML = product.description;
+            }
         }
 
         if (extrasSection) {
-            const hasDescription = !!product.description;
+            // Enhanced check for Quill empty content: "<p><br></p>"
+            const hasDescription = !!product.description && product.description !== '<p><br></p>' && product.description !== '<p></p>';
             const hasStructuredSpecs = (product.detailsList && product.detailsList.length > 0);
             const hasDirectSpecs = !!product.refinedDetails;
             const hasFeatures = (product.features && product.features.length > 0);
 
-            console.log('Data Presence Check:', { hasDescription, hasStructuredSpecs, hasDirectSpecs, hasFeatures });
+            console.log('DEBUG - Section Visibility Logic:', { hasDescription, hasStructuredSpecs, hasDirectSpecs, hasFeatures });
 
-            // Always show the section if we have any data to show
-            extrasSection.style.display = (hasDescription || hasStructuredSpecs || hasDirectSpecs || hasFeatures) ? 'block' : 'none';
+            // FORCE SHOW for debugging if needed, but we follow the logic for now
+            // We want to see at least the fallback if hasDescription is false but we show anyway
+            extrasSection.style.display = 'block'; 
 
             // Populate Specifications Tab
             if (refinedDetailsElem) {

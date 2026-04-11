@@ -533,6 +533,8 @@
                 galleryImages: galleryImages
             };
 
+            console.log('DEBUG - Saving Product Data:', product);
+
             try {
                 if (window.isEditMode) {
                     await window.AppStore.updateProduct(window.editId, product);
