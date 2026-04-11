@@ -1,10 +1,11 @@
 const defaultProducts = [];
 
-// --- ONE-TIME RESET FOR TESTING ---
-if (!localStorage.getItem('vibepick_init_v2')) {
-    localStorage.clear();
-    localStorage.setItem('vibepick_init_v2', 'true');
-    console.log('One-time testing reset applied.');
+// --- SAFE INITIALIZATION ---
+if (!localStorage.getItem('vibepick_v2_initialized')) {
+    if (!localStorage.getItem('app_products')) localStorage.setItem('app_products', JSON.stringify([]));
+    if (!localStorage.getItem('app_categories')) localStorage.setItem('app_categories', JSON.stringify(["Outerwear", "Tops", "Footwear", "Accessories"]));
+    localStorage.setItem('vibepick_v2_initialized', 'true');
+    console.log('System initialized.');
 }
 
 window.AppStore = {

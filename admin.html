@@ -3,7 +3,7 @@
 <head>
     <script>
         // STRICT ADMIN PROTECTION
-        if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('vibepick_admin_session') !== 'active') {
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
             window.location.href = 'login.html';
         }
     </script>
