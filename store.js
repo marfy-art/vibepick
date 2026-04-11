@@ -678,8 +678,8 @@ window.AppStore = {
         const priceElem = document.getElementById('detail-price');
         if (priceElem) priceElem.textContent = this.formatMoney(product.price);
         
-        // Data Verification (Requested by User)
-        console.log('DEBUG - Product Data:', product);
+        // Rendering Data Presence
+        console.log('Rendering Product Details for:', product.id);
 
         // Hide size section if product.sizes is empty
         const sizeSection = document.getElementById('detail-size-section');
@@ -737,52 +737,42 @@ window.AppStore = {
         const refinedDetailsElem = document.getElementById('refined-details');
         const tabButtons = document.querySelectorAll('.detail-tab-toggle');
         const tabPanes = document.querySelectorAll('.tab-content-panel');
+        const descElem = document.getElementById('product-description');
+
         if (descElem) {
-            const cleanDesc = product.description ? product.description.replace(/<p><br><\/p>/g, '').trim() : '';
-            console.log('DEBUG - Clean Description Check:', cleanDesc ? 'Exists' : 'Empty/Placeholder');
-            
-            if (!cleanDesc || cleanDesc === '<p></p>') {
-                descElem.innerHTML = `<div class="p-8 border-2 border-dashed border-outline-variant/20 text-center">
-                    <p class="text-sm italic text-on-surface-variant opacity-60">The story for this collector's item is being refined. Check back soon for the full artisan details.</p>
-                </div>`;
-            } else {
-                descElem.innerHTML = product.description;
-            }
+            // Explicit Force Logic per User Request
+            descElem.innerHTML = product.description || '<p class="text-sm italic text-on-surface-variant opacity-60">No description available.</p>';
+            descElem.style.display = 'block';
+            descElem.classList.remove('hidden');
         }
 
         if (extrasSection) {
-            // Enhanced check for Quill empty content: "<p><br></p>"
-            const hasDescription = !!product.description && product.description !== '<p><br></p>' && product.description !== '<p></p>';
-            const hasStructuredSpecs = (product.detailsList && product.detailsList.length > 0);
+            const hasDescription = !!product.description && product.description !== '<p><br></p>';
+            const hasSpecs = (product.detailsList && product.detailsList.length > 0);
             const hasDirectSpecs = !!product.refinedDetails;
             const hasFeatures = (product.features && product.features.length > 0);
 
-            console.log('DEBUG - Section Visibility Logic:', { hasDescription, hasStructuredSpecs, hasDirectSpecs, hasFeatures });
-
-            // FORCE SHOW for debugging if needed, but we follow the logic for now
-            // We want to see at least the fallback if hasDescription is false but we show anyway
-            extrasSection.style.display = 'block'; 
+            // Always show the section if we have any data to show
+            extrasSection.style.display = (hasDescription || hasSpecs || hasDirectSpecs || hasFeatures) ? 'block' : 'none';
 
             // Populate Specifications Tab
             if (refinedDetailsElem) {
                 refinedDetailsElem.innerHTML = '';
                 
                 if (hasDirectSpecs) {
-                    // Inject direct HTML/String if provided
                     refinedDetailsElem.innerHTML = product.refinedDetails;
-                } else if (hasStructuredSpecs) {
-                    // Render the structured list
+                } else if (hasSpecs) {
+                    // Render the structured list (Matches add-product.html schema)
                     product.detailsList.forEach(d => {
                         const li = document.createElement('li');
                         li.className = 'flex flex-col gap-1 border-b border-outline-variant/20 pb-4';
                         li.innerHTML = `
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">${d.title}</span>
-                            <span class="text-xs font-semibold text-on-surface">${d.value}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">${d.title || 'Detail'}</span>
+                            <span class="text-xs font-semibold text-on-surface">${d.value || d}</span>
                         `;
                         refinedDetailsElem.appendChild(li);
                     });
                 } else if (hasFeatures) {
-                    // Render simple features list
                     product.features.forEach(f => {
                         const li = document.createElement('li');
                         li.className = 'flex items-start gap-3 text-xs text-on-surface-variant font-medium';
@@ -793,7 +783,7 @@ window.AppStore = {
                         refinedDetailsElem.appendChild(li);
                     });
                 } else {
-                    refinedDetailsElem.innerHTML = '<p class="text-xs text-on-surface-variant opacity-50 italic">Full specifications are pending update for this edition.</p>';
+                    refinedDetailsElem.innerHTML = '<li class="text-xs text-on-surface-variant opacity-50 italic">Details are pending update.</li>';
                 }
             }
 

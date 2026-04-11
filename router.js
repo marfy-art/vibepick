@@ -80,6 +80,7 @@ window.handleRouting = async function(url) {
 
             // Re-initialize Store UI
             if (window.initStoreUI) {
+                console.log('Router: Triggering Store UI Re-initialization');
                 window.initStoreUI();
             }
             
