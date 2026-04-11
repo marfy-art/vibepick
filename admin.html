@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
+    <script>
+        // STRICT ADMIN PROTECTION
+        if (localStorage.getItem('vibepick_admin_session') !== 'active') {
+            window.location.href = 'login.html';
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - VIBEPICK</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300,0&display=swap" rel="stylesheet">
-    <script>
-        // ROUTE PROTECTION
-        if (localStorage.getItem('isAdmin') !== 'true' && sessionStorage.getItem('isAdmin') !== 'true') {
-            window.location.href = 'login.html';
-        }
-    </script>
     <style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; background-color: #f9f9f9; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Manrope', sans-serif; }
@@ -361,6 +361,7 @@
         document.getElementById('logout-btn').addEventListener('click', () => {
             sessionStorage.removeItem('isAdmin');
             localStorage.removeItem('isAdmin');
+            localStorage.removeItem('vibepick_admin_session');
             window.location.href = 'index.html';
         });
 
