@@ -191,7 +191,7 @@
          * CLEAN REBUILD: Manual Data Binding Logic
          * Bypasses the old store.js rendering triggers
          */
-        function renderDetailsFromScratch() {
+        window.forceRenderDetails = function() {
             console.log('--- REBUILD: Performing Direct Injection ---');
             
             const urlParams = new URLSearchParams(window.location.search);
@@ -338,10 +338,10 @@
         }
 
         // Run immediately to bypass any router lag
-        renderDetailsFromScratch();
+        window.forceRenderDetails();
         
         // Safety for SPA popstate
-        window.addEventListener('popstate', renderDetailsFromScratch);
+        window.addEventListener('popstate', window.forceRenderDetails);
     </script>
 </body>
 

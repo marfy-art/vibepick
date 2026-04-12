@@ -83,6 +83,12 @@ window.handleRouting = async function(url) {
                 console.log('Router: Triggering Store UI Re-initialization');
                 window.initStoreUI();
             }
+
+            // [CRITICAL] Final Non-Negotiable Sync Fix: Re-render details explicitly
+            if (window.location.href.includes('details.html') && typeof window.forceRenderDetails === 'function') {
+                console.log('Router: Triggering forceRenderDetails');
+                window.forceRenderDetails();
+            }
             
             window.scrollTo({ top: 0, behavior: 'instant' });
             document.body.style.opacity = '1';
