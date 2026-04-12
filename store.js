@@ -594,6 +594,9 @@ window.AppStore = {
     renderProductDetails() {
         if (!document.getElementById('detail-title')) return;
         
+        // Re-sync from localStorage to ensure we have the latest added products
+        this.state.products = JSON.parse(localStorage.getItem('app_products')) || [];
+        
         const params = new URLSearchParams(window.location.search);
         let productId = params.get('id');
         
@@ -601,7 +604,8 @@ window.AppStore = {
             productId = this.state.products[0].id;
         }
 
-        const product = this.state.products.find(p => p.id === productId);
+        // Match by ID or Name
+        const product = this.state.products.find(p => p.id === productId || p.name === decodeURIComponent(productId));
         if (!product) {
             const mainEl = document.querySelector('main');
             if(mainEl) {
@@ -747,13 +751,14 @@ window.AppStore = {
         }
 
         if (extrasSection) {
-            const hasDescription = !!product.description && product.description !== '<p><br></p>';
-            const hasSpecs = (product.detailsList && product.detailsList.length > 0);
+            const hasDescription = !!product.description && product.description.trim() !== '' && product.description !== '<p><br></p>';
+            const hasSpecs = (product.detailsList && Array.isArray(product.detailsList) && product.detailsList.length > 0);
             const hasDirectSpecs = !!product.refinedDetails;
             const hasFeatures = (product.features && product.features.length > 0);
 
             // Always show the section if we have any data to show
             extrasSection.style.display = (hasDescription || hasSpecs || hasDirectSpecs || hasFeatures) ? 'block' : 'none';
+            extrasSection.classList.remove('hidden');
 
             // Populate Specifications Tab
             if (refinedDetailsElem) {
