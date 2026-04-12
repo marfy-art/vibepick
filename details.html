@@ -130,7 +130,7 @@
                     </div>
 
                     <!-- Context/Refined Details Sidebar -->
-                    <section class="space-y-8 pt-12 border-t border-neutral-100">
+                    <section id="detail-extras-section" class="space-y-8 pt-12 border-t border-neutral-100">
                         <h3 class="text-[10px] uppercase tracking-[0.3em] font-black text-on-surface-variant/60 underline underline-offset-8 decoration-secondary/30">Refined details</h3>
                         <ul id="refine-details" class="space-y-4 text-xs font-semibold tracking-tight leading-relaxed">
                             <!-- Unstyled list of specs -->
@@ -238,13 +238,24 @@
 
             // [4] Refined Details Sidebar (FORCE VISIBILITY + Loop Injection)
             const refineDetailsList = document.getElementById('refine-details');
-            refineDetailsList.classList.remove('hidden', 'invisible');
-            if (product.detailsList && Array.isArray(product.detailsList)) {
-                // Precise mapping for the details list
-                refineDetailsList.innerHTML = product.detailsList.map(item => `<li>${item.value || item}</li>`).join('');
+            const extrasSection = document.getElementById('detail-extras-section');
+            
+            if (product.detailsList && Array.isArray(product.detailsList) && product.detailsList.length > 0) {
+                extrasSection.style.display = 'block';
+                refineDetailsList.innerHTML = product.detailsList.map(item => `
+                    <li class="flex flex-col gap-1 border-b border-neutral-100 pb-4">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/40">${item.title || 'Detail'}</span>
+                        <span class="text-xs font-semibold text-on-surface">${item.value || item}</span>
+                    </li>
+                `).join('');
             } else if (product.refinedDetails) {
+                 extrasSection.style.display = 'block';
                  refineDetailsList.innerHTML = `<li>${product.refinedDetails}</li>`;
+            } else if (product.detailsList && product.detailsList.length === 0) {
+                // If it's explicitly empty, hide the section
+                extrasSection.style.display = 'none';
             } else {
+                extrasSection.style.display = 'block';
                 refineDetailsList.innerHTML = '<li>Crafted for durability.</li><li>Universal design specifications.</li>';
             }
 
