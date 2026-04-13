@@ -1,96 +1,78 @@
 /**
  * VibePick Store Management Logic
- * Migrated to MongoDB Atlas App Services (Realm Web SDK)
+ * Powered by Firebase Realtime Database for Instant Multi-Browser Sync
  */
 
-// --- CONFIGURATION ---
-const DB_CONFIG = {
-    APP_ID: 'vibepick-app-xxxxx', // USER: Replace with your MongoDB App ID (found in App Services)
-    DATABASE: 'vibepick_db',
-    COLLECTIONS: {
-        PRODUCTS: 'products',
-        ORDERS: 'orders',
-        SALES: 'sales_meta',
-        CATEGORIES: 'categories',
-        REPORTS: 'reports'
-    }
+// --- FIREBASE CONFIGURATION ---
+// USER: Replace these values with your Firebase Project Configuration
+const firebaseConfig = {
+  apiKey: 'AIzaSyA36Xha9t1t0zXeH7TY4ts2FNseKQhxZt8',
+  authDomain: 'vibepick-2a776.firebaseapp.com',
+  databaseURL: 'https://vibepick-2a776-default-rtdb.firebaseio.com',
+  projectId: 'vibepick-2a776',
+  storageBucket: 'vibepick-2a776.firebasestorage.app',
+  messagingSenderId: '42869078681',
+  appId: '1:42869078681:web:a8cd9672728ba2df255608',
+  measurementId: 'G-C1CCK3QRVM'
 };
 
-let db = null;
-
-// --- DATABASE INITIALIZATION ---
-async function initDB() {
-    if (db) return db;
-    try {
-        const app = new Realm.App({ id: DB_CONFIG.APP_ID });
-        // Using Anonymous Authentication for universal sync without requiring user login
-        const user = await app.logIn(Realm.Credentials.anonymous());
-        const mongodb = app.currentUser.mongoClient("mongodb-atlas");
-        db = mongodb.db(DB_CONFIG.DATABASE);
-        console.log('✅ Connected to MongoDB Atlas via App Services.');
-        return db;
-    } catch (err) {
-        console.error('❌ MongoDB Initialization Failed:', err);
-        return null;
-    }
+// Initialize Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
 }
+const db = firebase.database();
 
 window.AppStore = {
     state: {
-        categories: JSON.parse(localStorage.getItem('app_categories')) || ["Outerwear", "Tops", "Footwear", "Accessories"],
-        products: JSON.parse(localStorage.getItem('app_products')) || [],
+        categories: ["Outerwear", "Tops", "Footwear", "Accessories"],
+        products: [],
         cart: JSON.parse(localStorage.getItem('app_cart')) || [],
-        sales: JSON.parse(localStorage.getItem('app_sales')) || { totalRevenue: 0, totalItemsSold: 0 },
-        orders: JSON.parse(localStorage.getItem('app_orders')) || [],
-        financialReports: JSON.parse(localStorage.getItem('app_reports')) || [],
-        isLoading: false,
+        sales: { totalRevenue: 0, totalItemsSold: 0 },
+        orders: [],
+        financialReports: [],
+        isLoading: true,
     },
     searchTerm: '',
 
-    // --- SYNC CORE ---
-    async syncWithDB() {
-        this.state.isLoading = true;
-        console.log('🔄 Syncing with MongoDB Atlas...');
+    // --- REALTIME SYNC CORE ---
+    initSync() {
+        console.log('🔥 Initializing Realtime Firebase Sync...');
+        
+        // Listen for all state changes in real-time
+        db.ref('store_state').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                this.state.products = data.products || [];
+                this.state.orders = data.orders ? Object.values(data.orders).reverse() : [];
+                this.state.sales = data.sales || { totalRevenue: 0, totalItemsSold: 0 };
+                this.state.categories = data.categories || this.state.categories;
+                this.state.financialReports = data.reports ? Object.values(data.reports).reverse() : [];
+                
+                console.log('✅ Synchronized with Firebase.');
+                this.state.isLoading = false;
+                this.renderAll();
+                this.updateOfflineCache();
+            } else {
+                // Initialize DB if empty
+                this.pushFullStateToDB();
+            }
+        });
+    },
 
-        try {
-            const database = await initDB();
-            if (!database) throw new Error("DB Connection failed");
-
-            // Fetch all collections in parallel
-            const [products, orders, salesDoc, categoriesDoc, reports] = await Promise.all([
-                database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).find({}),
-                database.collection(DB_CONFIG.COLLECTIONS.ORDERS).find({}),
-                database.collection(DB_CONFIG.COLLECTIONS.SALES).findOne({}),
-                database.collection(DB_CONFIG.COLLECTIONS.CATEGORIES).findOne({}),
-                database.collection(DB_CONFIG.COLLECTIONS.REPORTS).find({})
-            ]);
-
-            this.state.products = products || [];
-            this.state.orders = orders || [];
-            if (salesDoc) this.state.sales = salesDoc;
-            if (categoriesDoc && categoriesDoc.list) this.state.categories = categoriesDoc.list;
-            this.state.financialReports = reports || [];
-            
-            console.log('✅ Sync Complete.');
-        } catch (err) {
-            console.warn('⚠️ MongoDB Sync failed, using local cache.', err);
-        }
-
-        this.state.isLoading = false;
-        this.renderAll();
-        this.updateOfflineCache();
+    pushFullStateToDB() {
+        db.ref('store_state').set({
+            products: this.state.products,
+            categories: this.state.categories,
+            sales: this.state.sales
+        });
     },
 
     updateOfflineCache() {
-        localStorage.setItem('app_products', JSON.stringify(this.state.products));
         localStorage.setItem('app_cart', JSON.stringify(this.state.cart));
-        localStorage.setItem('app_sales', JSON.stringify(this.state.sales));
-        localStorage.setItem('app_orders', JSON.stringify(this.state.orders));
-        localStorage.setItem('app_reports', JSON.stringify(this.state.financialReports));
-        localStorage.setItem('app_categories', JSON.stringify(this.state.categories));
+        // We only cache the cart locally; other state is live from Firebase
     },
 
-    // MediaDB: IndexedDB utility for large file storage (Videos)
+    // MediaDB (IndexedDB for local video storage - still useful for performance)
     mediaDB: {
         dbName: 'vibepick_media_v1',
         storeName: 'media',
@@ -99,41 +81,18 @@ window.AppStore = {
                 const request = indexedDB.open(this.dbName, 1);
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
-                    if (!db.objectStoreNames.contains(this.storeName)) {
-                        db.createObjectStore(this.storeName);
-                    }
+                    if (!db.objectStoreNames.contains(this.storeName)) db.createObjectStore(this.storeName);
                 };
                 request.onsuccess = (e) => resolve(e.target.result);
                 request.onerror = (e) => reject(e.target.error);
             });
         },
         async save(id, blob) {
-            const db = await this.init();
+            const dbRef = await this.init();
             return new Promise((resolve, reject) => {
-                const transaction = db.transaction(this.storeName, 'readwrite');
-                const store = transaction.objectStore(this.storeName);
-                store.put(blob, id);
+                const transaction = dbRef.transaction(this.storeName, 'readwrite');
+                transaction.objectStore(this.storeName).put(blob, id);
                 transaction.oncomplete = () => resolve(id);
-                transaction.onerror = () => reject(transaction.error);
-            });
-        },
-        async get(id) {
-            const db = await this.init();
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(this.storeName, 'readonly');
-                const store = transaction.objectStore(this.storeName);
-                const request = store.get(id);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        },
-        async delete(id) {
-            const db = await this.init();
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(this.storeName, 'readwrite');
-                const store = transaction.objectStore(this.storeName);
-                store.delete(id);
-                transaction.oncomplete = () => resolve();
                 transaction.onerror = () => reject(transaction.error);
             });
         }
@@ -142,13 +101,7 @@ window.AppStore = {
     async addNewCategory(newCat) {
         if (newCat && !this.state.categories.includes(newCat)) {
             this.state.categories.push(newCat);
-            const database = await initDB();
-            await database.collection(DB_CONFIG.COLLECTIONS.CATEGORIES).updateOne(
-                {}, 
-                { "$set": { list: this.state.categories } },
-                { upsert: true }
-            );
-            await this.syncWithDB();
+            await db.ref('store_state/categories').set(this.state.categories);
         }
     },
 
@@ -163,7 +116,7 @@ window.AppStore = {
 
         let size = selectedSize;
         if (product.sizes && product.sizes.length > 0 && !size) {
-            const activeSizeBtn = document.querySelector('#detail-sizes-grid button.bg-on-surface');
+            const activeSizeBtn = document.querySelector('#detail-sizes-grid button.bg-black');
             if (activeSizeBtn) size = activeSizeBtn.textContent;
             else return alert('Please select a size first.');
         }
@@ -217,9 +170,8 @@ window.AppStore = {
 
     async checkout(customerDetails) {
         if (this.state.cart.length === 0) return;
+        this.state.isLoading = true;
         try {
-            this.state.isLoading = true;
-            const database = await initDB();
             let orderTotal = 0;
             let itemsSold = 0;
             const newOrder = {
@@ -231,29 +183,30 @@ window.AppStore = {
                 status: 'Pending'
             };
 
+            const updates = {};
             for (const cartItem of this.state.cart) {
-                const product = this.state.products.find(p => p.id === cartItem.id);
-                if (!product || product.stockCount < cartItem.quantity) throw new Error(\`Insufficient stock for \${cartItem.name}\`);
-                orderTotal += (product.price * cartItem.quantity);
+                const productIndex = this.state.products.findIndex(p => p.id === cartItem.id);
+                if (productIndex === -1 || this.state.products[productIndex].stockCount < cartItem.quantity) {
+                    throw new Error(\`Insufficient stock for \${cartItem.name}\`);
+                }
+                orderTotal += (cartItem.price * cartItem.quantity);
                 itemsSold += cartItem.quantity;
-
-                // Sync Stock Update
-                await database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).updateOne(
-                    { id: product.id },
-                    { "$inc": { stockCount: -cartItem.quantity } }
-                );
+                
+                // Update Local Stock reference for bulk update
+                this.state.products[productIndex].stockCount -= cartItem.quantity;
             }
 
             newOrder.totalAmount = orderTotal;
-            await database.collection(DB_CONFIG.COLLECTIONS.ORDERS).insertOne(newOrder);
-            await database.collection(DB_CONFIG.COLLECTIONS.SALES).updateOne(
-                {},
-                { "$inc": { totalRevenue: orderTotal, totalItemsSold: itemsSold } },
-                { upsert: true }
-            );
+            
+            // Multi-path update in Firebase
+            const orderId = db.ref('store_state/orders').push().key;
+            updates[\`store_state/orders/\${orderId}\`] = newOrder;
+            updates[\`store_state/products\`] = this.state.products;
+            updates[\`store_state/sales/totalRevenue\`] = (this.state.sales.totalRevenue || 0) + orderTotal;
+            updates[\`store_state/sales/totalItemsSold\`] = (this.state.sales.totalItemsSold || 0) + itemsSold;
 
+            await db.ref().update(updates);
             this.state.cart = [];
-            await this.syncWithDB();
             this.showToast('Order processed successfully!', 'success');
         } catch (error) {
             this.showToast(error.message, 'error');
@@ -262,19 +215,20 @@ window.AppStore = {
     },
 
     async updateOrderStatus(orderId, newStatus) {
-        const database = await initDB();
-        await database.collection(DB_CONFIG.COLLECTIONS.ORDERS).updateOne(
-            { id: orderId },
-            { "$set": { status: newStatus } }
-        );
-        await this.syncWithDB();
+        // Since orders array is reversed in local state, find key by iterating Firebase data or index
+        const snapshot = await db.ref('store_state/orders').once('value');
+        const ordersData = snapshot.val();
+        for (let key in ordersData) {
+            if (ordersData[key].id === orderId) {
+                await db.ref(\`store_state/orders/\${key}/status\`).set(newStatus);
+                break;
+            }
+        }
     },
 
     async saveFinancialReport(reportData) {
         const fullReport = { id: \`REP-\${Date.now()}\`, date: new Date().toISOString(), ...reportData };
-        const database = await initDB();
-        await database.collection(DB_CONFIG.COLLECTIONS.REPORTS).insertOne(fullReport);
-        await this.syncWithDB();
+        await db.ref('store_state/reports').push(fullReport);
     },
 
     sanitizeString(str) {
@@ -283,50 +237,23 @@ window.AppStore = {
     },
     
     async addNewProduct(productData) {
-        const sanitizeObj = (obj, isDescription = false) => {
-            if (typeof obj === 'string') return isDescription ? obj : this.sanitizeString(obj);
-            if (Array.isArray(obj)) return obj.map(item => sanitizeObj(item));
-            if (typeof obj === 'object' && obj !== null) {
-                const newObj = {};
-                for (let key in obj) newObj[key] = sanitizeObj(obj[key], key === 'description');
-                return newObj;
-            }
-            return obj;
-        };
         const prodId = \`prod-\${Date.now()}\`;
-        const safeProduct = sanitizeObj(productData);
-        safeProduct.id = prodId;
-
-        const database = await initDB();
-        await database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).insertOne(safeProduct);
-        await this.syncWithDB();
+        productData.id = prodId;
+        this.state.products.unshift(productData);
+        await db.ref('store_state/products').set(this.state.products);
     },
 
     async updateProduct(id, productData) {
-        const sanitizeObj = (obj, isDescription = false) => {
-            if (typeof obj === 'string') return isDescription ? obj : this.sanitizeString(obj);
-            if (Array.isArray(obj)) return obj.map(item => sanitizeObj(item));
-            if (typeof obj === 'object' && obj !== null) {
-                const newObj = {};
-                for (let key in obj) newObj[key] = sanitizeObj(obj[key], key === 'description');
-                return newObj;
-            }
-            return obj;
-        };
-        const safeProduct = sanitizeObj(productData);
-        const database = await initDB();
-        await database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).updateOne(
-            { id: id },
-            { "$set": safeProduct }
-        );
-        await this.syncWithDB();
+        const index = this.state.products.findIndex(p => p.id === id);
+        if (index !== -1) {
+            this.state.products[index] = { ...this.state.products[index], ...productData };
+            await db.ref('store_state/products').set(this.state.products);
+        }
     },
     
     async deleteProduct(id) {
-        const database = await initDB();
-        await database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).deleteOne({ id: id });
-        this.state.cart = this.state.cart.filter(c => c.id !== id);
-        await this.syncWithDB();
+        this.state.products = this.state.products.filter(p => p.id !== id);
+        await db.ref('store_state/products').set(this.state.products);
     },
 
     getCartTotals() {
@@ -340,6 +267,7 @@ window.AppStore = {
         this.renderProductsList();
     },
 
+    // UI RENDERERS
     renderAll() {
         this.renderCartSidebar();
         this.renderProductsList();
@@ -389,22 +317,18 @@ window.AppStore = {
         const container = document.getElementById('cart-items-container');
         const subtotalEl = document.getElementById('cart-sidebar-subtotal');
         if (!container || !subtotalEl) return;
-        const totals = this.getCartTotals();
-        subtotalEl.textContent = this.formatMoney(totals.subtotal);
+        subtotalEl.textContent = this.formatMoney(this.getCartTotals().subtotal);
         if (this.state.cart.length === 0) {
-            container.innerHTML = \`<div class="flex flex-col items-center justify-center h-full text-center mt-10"><p class="text-gray-500 text-sm mb-6">Your cart is empty.</p><button data-action="close-cart" class="border border-gray-300 px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition-colors">Close</button></div>\`;
+            container.innerHTML = \`<div class="flex flex-col items-center justify-center h-full text-center mt-10"><p class="text-gray-500">Your cart is empty.</p></div>\`;
             return;
         }
         container.innerHTML = this.state.cart.map(item => \`
             <div class="flex gap-4">
                 <div class="w-20 h-28 bg-gray-100 flex-shrink-0"><img src="\${item.selectedColorColorName || (item.images && item.images[0] ? item.images[0] : './placeholder.jpg')}" class="w-full h-full object-cover"></div>
                 <div class="flex flex-col justify-between flex-grow">
-                    <div>
-                        <div class="flex justify-between items-start gap-2 min-w-0">
-                            <h3 class="text-sm font-bold text-gray-900 truncate flex-1 min-w-0">\${item.name} \${item.size ? \`(\${item.size})\` : ''}</h3>
-                            <button data-action="remove-item" data-id="\${item.cartId}" class="text-gray-400 hover:text-red-700"><span class="material-symbols-outlined text-sm">delete</span></button>
-                        </div>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">\${item.category}</p>
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-sm font-bold truncate flex-1">\${item.name} \${item.size ? \`(\${item.size})\` : ''}</h3>
+                        <button data-action="remove-item" data-id="\${item.cartId}" class="text-gray-400 hover:text-red-700"><span class="material-symbols-outlined text-sm">delete</span></button>
                     </div>
                     <div class="flex justify-between items-end">
                         <div class="flex items-center gap-3 bg-gray-50 border border-gray-200 px-2 py-1">
@@ -429,7 +353,7 @@ window.AppStore = {
             return;
         }
         products.forEach(product => {
-            const isOutOfStock = product.stockCount === 0;
+            const isOutOfStock = product.stockCount <= 0;
             const productEl = document.createElement('div');
             productEl.className = 'group flex flex-col cursor-pointer hover:scale-[1.02] transition-transform duration-300 relative';
             productEl.setAttribute('data-action', 'view-details');
@@ -454,32 +378,15 @@ window.AppStore = {
     renderOrderSummaryIfCheckout() {
         const summaryContainer = document.getElementById('checkout-order-summary');
         if (!summaryContainer) return;
-        const totals = this.getCartTotals();
         summaryContainer.innerHTML = this.state.cart.map(item => \`
-            <div class="flex gap-4 group">
-                <div class="w-20 h-28 bg-gray-100 flex-shrink-0"><img src="\${item.selectedColorColorName || item.images[0]}" class="w-full h-full object-cover"></div>
-                <div class="flex flex-col justify-between flex-grow py-1 min-w-0">
-                    <div>
-                        <div class="flex justify-between items-start gap-2 min-w-0">
-                            <h4 class="font-bold text-sm text-gray-900 truncate flex-1">\${item.name}</h4>
-                            <button data-action="remove-item" data-id="\${item.cartId}" class="text-gray-400 hover:text-red-700"><span class="material-symbols-outlined text-sm">delete</span></button>
-                        </div>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">\${item.category}</p>
-                    </div>
-                    <div class="flex justify-between items-end">
-                        <div class="flex items-center gap-3 bg-gray-50 border border-gray-200 px-2 py-1">
-                            <button data-action="decrease-qty" data-id="\${item.cartId}" class="text-xs px-2">-</button>
-                            <span class="text-xs font-medium w-4 text-center">\${item.quantity}</span>
-                            <button data-action="increase-qty" data-id="\${item.cartId}" class="text-xs px-2">+</button>
-                        </div>
-                        <span class="font-bold text-sm">\${this.formatMoney(item.price * item.quantity)}</span>
-                    </div>
-                </div>
+            <div class="flex justify-between py-2 border-b border-gray-100">
+                <span class="text-sm font-medium">\${item.name} (x\${item.quantity})</span>
+                <span class="text-sm font-bold">\${this.formatMoney(item.price * item.quantity)}</span>
             </div>
         \`).join('') + \`
-            <div class="pt-6 border-t border-gray-200 mt-6 flex justify-between items-baseline">
+            <div class="mt-6 flex justify-between">
                 <span class="text-lg font-bold">Total</span>
-                <span class="text-2xl font-extrabold tracking-tighter">\${this.formatMoney(totals.total)}</span>
+                <span class="text-2xl font-extrabold">\${this.formatMoney(this.getCartTotals().total)}</span>
             </div>
         \`;
     },
@@ -490,33 +397,23 @@ window.AppStore = {
         let productId = params.get('id');
         const product = this.state.products.find(p => p.id === productId);
         if (!product) return;
+        
         document.getElementById('detail-image').src = product.images[0];
         document.getElementById('detail-category').textContent = product.category;
         document.getElementById('detail-title').textContent = product.name;
         document.getElementById('detail-price').textContent = this.formatMoney(product.price);
         
-        // Quill Support
         const descElem = document.getElementById('detail-desc') || document.getElementById('product-description');
         if (descElem) descElem.innerHTML = product.description || "";
-        const descSecondary = document.getElementById('detail-desc-secondary');
-        if (descSecondary) descSecondary.innerHTML = product.description || "";
 
-        // Sizes
         const sizesGrid = document.getElementById('detail-sizes-grid');
         if (sizesGrid) {
             sizesGrid.innerHTML = (product.sizes || []).map((s, i) => \`<button class="size-btn py-3 text-xs transition-colors \${i === 0 ? 'bg-black text-white' : 'bg-gray-100 hover:bg-gray-200'}" onclick="[...this.parentElement.children].forEach(b=>b.className='size-btn py-3 text-xs bg-gray-100 hover:bg-gray-200');this.className='size-btn py-3 text-xs bg-black text-white'">\${s}</button>\`).join('');
         }
 
-        // Colors
         const colorsContainer = document.getElementById('detail-colors-container');
         if (colorsContainer) {
             colorsContainer.innerHTML = (product.colors || []).map(c => \`<button data-action="swap-image" data-img-url="\${c.colorImage}" data-color-name="\${c.colorName}" class="w-8 h-8 rounded-full border border-gray-300 hover:scale-110 transition-transform overflow-hidden shadow-sm flex-shrink-0"><img src="\${c.colorImage}" class="w-full h-full object-cover pointer-events-none"></button>\`).join('');
-        }
-
-        // Refine Details
-        const refineGrid = document.getElementById('refined-details') || document.getElementById('detail-features-grid');
-        if (refineGrid) {
-            refineGrid.innerHTML = (product.detailsList || []).map(d => \`<li class="flex flex-col gap-1 border-b border-gray-100 pb-2 mt-2"><span class="font-bold tracking-widest text-[10px] uppercase text-gray-500">\${d.title}</span><span class="text-sm text-black">\${d.value}</span></li>\`).join('');
         }
     },
 
@@ -525,10 +422,7 @@ window.AppStore = {
         const sidebar = document.getElementById('global-cart-sidebar');
         if (!wrapper || !sidebar) return;
         wrapper.classList.remove('hidden');
-        setTimeout(() => {
-            wrapper.classList.remove('opacity-0');
-            sidebar.classList.remove('translate-x-full');
-        }, 10);
+        setTimeout(() => { wrapper.classList.remove('opacity-0'); sidebar.classList.remove('translate-x-full'); }, 10);
     },
 
     closeCart() {
@@ -541,13 +435,8 @@ window.AppStore = {
     }
 };
 
-// --- INITIALIZE APP ---
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.initStoreUI) window.initStoreUI();
-    if (window.AppStore && window.AppStore.syncWithDB) window.AppStore.syncWithDB();
-});
-
-// Event Delegation
+// --- INITIALIZE ---
+window.AppStore.initSync();
 document.addEventListener('click', (e) => {
     const target = e.target.closest('[data-action]');
     if (!target) return;
@@ -558,21 +447,14 @@ document.addEventListener('click', (e) => {
         window.history.pushState({}, '', url);
         if (window.handleRouting) window.handleRouting(url);
         else window.location.href = url;
-    } else if (action === 'add-to-cart') {
-        window.AppStore.addToCart(id);
-    } else if (action === 'remove-item') {
-        window.AppStore.removeFromCart(id);
-    } else if (action === 'increase-qty') {
-        window.AppStore.updateCartQuantity(id, 1);
-    } else if (action === 'decrease-qty') {
-        window.AppStore.updateCartQuantity(id, -1);
-    } else if (action === 'close-cart') {
-        window.AppStore.closeCart();
-    } else if (action === 'swap-image') {
+    } else if (action === 'add-to-cart') window.AppStore.addToCart(id);
+    else if (action === 'remove-item') window.AppStore.removeFromCart(id);
+    else if (action === 'increase-qty') window.AppStore.updateCartQuantity(id, 1);
+    else if (action === 'decrease-qty') window.AppStore.updateCartQuantity(id, -1);
+    else if (action === 'close-cart') window.AppStore.closeCart();
+    else if (action === 'swap-image') {
         const newImgUrl = target.getAttribute('data-img-url');
         const img = document.getElementById('detail-image');
         if (img) img.src = newImgUrl;
-        const colorLabel = document.getElementById('detail-color-label');
-        if (colorLabel) colorLabel.textContent = \`Color / \${target.getAttribute('data-color-name')}\`;
     }
 });
