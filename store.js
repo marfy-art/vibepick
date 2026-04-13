@@ -1,9 +1,12 @@
-// --- MONGODB ATLAS DATA API CONFIGURATION ---
+/**
+ * VibePick Store Management Logic
+ * Migrated to MongoDB Atlas App Services (Realm Web SDK)
+ */
+
+// --- CONFIGURATION ---
 const DB_CONFIG = {
-    API_KEY: 'YOUR_MONGODB_DATA_API_KEY', // USER: Replace with your Atlas Data API Key
-    BASE_URL: 'https://data.mongodb-api.com/app/data-xxxxx/endpoint/data/v1', // USER: Replace with your App Service URL
+    APP_ID: 'vibepick-app-xxxxx', // USER: Replace with your MongoDB App ID (found in App Services)
     DATABASE: 'vibepick_db',
-    DATA_SOURCE: 'Cluster0',
     COLLECTIONS: {
         PRODUCTS: 'products',
         ORDERS: 'orders',
@@ -13,29 +16,21 @@ const DB_CONFIG = {
     }
 };
 
-const defaultProducts = [];
+let db = null;
 
-// --- ASYNC DATABASE SYNC ---
-async function dbFetch(action, collection, body = {}) {
+// --- DATABASE INITIALIZATION ---
+async function initDB() {
+    if (db) return db;
     try {
-        const response = await fetch(`${DB_CONFIG.BASE_URL}/action/${action}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Request-Headers': '*',
-                'api-key': DB_CONFIG.API_KEY
-            },
-            body: JSON.stringify({
-                dataSource: DB_CONFIG.DATA_SOURCE,
-                database: DB_CONFIG.DATABASE,
-                collection: collection,
-                ...body
-            })
-        });
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error(`MongoDB Data API Error [${action}]:`, error);
+        const app = new Realm.App({ id: DB_CONFIG.APP_ID });
+        // Using Anonymous Authentication for universal sync without requiring user login
+        const user = await app.logIn(Realm.Credentials.anonymous());
+        const mongodb = app.currentUser.mongoClient("mongodb-atlas");
+        db = mongodb.db(DB_CONFIG.DATABASE);
+        console.log('✅ Connected to MongoDB Atlas via App Services.');
+        return db;
+    } catch (err) {
+        console.error('❌ MongoDB Initialization Failed:', err);
         return null;
     }
 }
@@ -52,25 +47,29 @@ window.AppStore = {
     },
     searchTerm: '',
 
-    // --- MONGODB SYNC CORE ---
+    // --- SYNC CORE ---
     async syncWithDB() {
         this.state.isLoading = true;
         console.log('🔄 Syncing with MongoDB Atlas...');
 
         try {
-            const [products, orders, sales, categories, reports] = await Promise.all([
-                dbFetch('find', DB_CONFIG.COLLECTIONS.PRODUCTS),
-                dbFetch('find', DB_CONFIG.COLLECTIONS.ORDERS),
-                dbFetch('findOne', DB_CONFIG.COLLECTIONS.SALES),
-                dbFetch('findOne', DB_CONFIG.COLLECTIONS.CATEGORIES),
-                dbFetch('find', DB_CONFIG.COLLECTIONS.REPORTS)
+            const database = await initDB();
+            if (!database) throw new Error("DB Connection failed");
+
+            // Fetch all collections in parallel
+            const [products, orders, salesDoc, categoriesDoc, reports] = await Promise.all([
+                database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).find({}),
+                database.collection(DB_CONFIG.COLLECTIONS.ORDERS).find({}),
+                database.collection(DB_CONFIG.COLLECTIONS.SALES).findOne({}),
+                database.collection(DB_CONFIG.COLLECTIONS.CATEGORIES).findOne({}),
+                database.collection(DB_CONFIG.COLLECTIONS.REPORTS).find({})
             ]);
 
-            if (products?.documents) this.state.products = products.documents;
-            if (orders?.documents) this.state.orders = orders.documents;
-            if (sales?.document) this.state.sales = sales.document;
-            if (categories?.document) this.state.categories = categories.document.list || this.state.categories;
-            if (reports?.documents) this.state.financialReports = reports.documents;
+            this.state.products = products || [];
+            this.state.orders = orders || [];
+            if (salesDoc) this.state.sales = salesDoc;
+            if (categoriesDoc && categoriesDoc.list) this.state.categories = categoriesDoc.list;
+            this.state.financialReports = reports || [];
             
             console.log('✅ Sync Complete.');
         } catch (err) {
@@ -143,11 +142,12 @@ window.AppStore = {
     async addNewCategory(newCat) {
         if (newCat && !this.state.categories.includes(newCat)) {
             this.state.categories.push(newCat);
-            await dbFetch('updateOne', DB_CONFIG.COLLECTIONS.CATEGORIES, {
-                filter: {},
-                update: { "$set": { list: this.state.categories } },
-                upsert: true
-            });
+            const database = await initDB();
+            await database.collection(DB_CONFIG.COLLECTIONS.CATEGORIES).updateOne(
+                {}, 
+                { "$set": { list: this.state.categories } },
+                { upsert: true }
+            );
             await this.syncWithDB();
         }
     },
@@ -168,17 +168,17 @@ window.AppStore = {
             else return alert('Please select a size first.');
         }
 
-        const cartId = size ? `${productId}-${size}` : productId;
+        const cartId = size ? \`\${productId}-\${size}\` : productId;
         const totalInCartForProduct = this.state.cart.filter(c => c.id === productId).reduce((sum, c) => sum + c.quantity, 0);
         const existingCartItem = this.state.cart.find(c => c.cartId === cartId);
         
         if (existingCartItem) {
             if (totalInCartForProduct < product.stockCount) existingCartItem.quantity++;
-            else alert(`Cannot add more. Only ${product.stockCount} left in total stock.`);
+            else alert(\`Cannot add more. Only \${product.stockCount} left in total stock.\`);
         } else {
             if (totalInCartForProduct < product.stockCount) {
                 this.state.cart.push({ ...product, cartId: cartId, size: size, quantity: 1, selectedColorColorName: document.getElementById('detail-image')?.src });
-            } else alert(`Cannot add more. Only ${product.stockCount} left in total stock.`);
+            } else alert(\`Cannot add more. Only \${product.stockCount} left in total stock.\`);
         }
         this.saveState();
         this.openCart();
@@ -192,7 +192,7 @@ window.AppStore = {
 
         if (cartItem && product) {
             const newQty = cartItem.quantity + delta;
-            if (delta > 0 && totalInCartForProduct >= product.stockCount) return alert(`Only ${product.stockCount} left.`);
+            if (delta > 0 && totalInCartForProduct >= product.stockCount) return alert(\`Only \${product.stockCount} left.\`);
             if (newQty <= 0) this.removeFromCart(cartId);
             else {
                 cartItem.quantity = newQty;
@@ -208,7 +208,7 @@ window.AppStore = {
 
     showToast(message, type = 'success') {
         const toast = document.createElement('div');
-        toast.className = `fixed bottom-8 right-8 px-6 py-4 rounded-md shadow-2xl z-[9999] text-sm font-bold text-white uppercase tracking-widest transition-opacity duration-300 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+        toast.className = \`fixed bottom-8 right-8 px-6 py-4 rounded-md shadow-2xl z-[9999] text-sm font-bold text-white uppercase tracking-widest transition-opacity duration-300 \${type === 'success' ? 'bg-green-600' : 'bg-red-600'}\`;
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.classList.add('opacity-0'), 2500);
@@ -219,33 +219,39 @@ window.AppStore = {
         if (this.state.cart.length === 0) return;
         try {
             this.state.isLoading = true;
+            const database = await initDB();
             let orderTotal = 0;
             let itemsSold = 0;
             const newOrder = {
-                id: `ORD-${Date.now()}`,
+                id: \`ORD-\${Date.now()}\`,
                 date: new Date().toISOString(),
                 customerInfo: customerDetails || { name: "Guest", email: "guest@example.com", address: "To verify", phone: "N/A" },
                 items: [...this.state.cart],
                 totalAmount: 0,
                 status: 'Pending'
             };
+
             for (const cartItem of this.state.cart) {
                 const product = this.state.products.find(p => p.id === cartItem.id);
-                if (!product || product.stockCount < cartItem.quantity) throw new Error(`Insufficient stock for ${cartItem.name}`);
+                if (!product || product.stockCount < cartItem.quantity) throw new Error(\`Insufficient stock for \${cartItem.name}\`);
                 orderTotal += (product.price * cartItem.quantity);
                 itemsSold += cartItem.quantity;
-                await dbFetch('updateOne', DB_CONFIG.COLLECTIONS.PRODUCTS, {
-                    filter: { id: product.id },
-                    update: { "$inc": { stockCount: -cartItem.quantity } }
-                });
+
+                // Sync Stock Update
+                await database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).updateOne(
+                    { id: product.id },
+                    { "$inc": { stockCount: -cartItem.quantity } }
+                );
             }
+
             newOrder.totalAmount = orderTotal;
-            await dbFetch('insertOne', DB_CONFIG.COLLECTIONS.ORDERS, { document: newOrder });
-            await dbFetch('updateOne', DB_CONFIG.COLLECTIONS.SALES, {
-                filter: {},
-                update: { "$inc": { totalRevenue: orderTotal, totalItemsSold: itemsSold } },
-                upsert: true
-            });
+            await database.collection(DB_CONFIG.COLLECTIONS.ORDERS).insertOne(newOrder);
+            await database.collection(DB_CONFIG.COLLECTIONS.SALES).updateOne(
+                {},
+                { "$inc": { totalRevenue: orderTotal, totalItemsSold: itemsSold } },
+                { upsert: true }
+            );
+
             this.state.cart = [];
             await this.syncWithDB();
             this.showToast('Order processed successfully!', 'success');
@@ -255,20 +261,19 @@ window.AppStore = {
         } finally { this.state.isLoading = false; }
     },
 
-    updateOrderStatus(orderId, newStatus) {
-        const order = this.state.orders.find(o => o.id === orderId);
-        if (order) {
-            order.status = newStatus;
-            dbFetch('updateOne', DB_CONFIG.COLLECTIONS.ORDERS, {
-                filter: { id: orderId },
-                update: { "$set": { status: newStatus } }
-            }).then(() => this.syncWithDB());
-        }
+    async updateOrderStatus(orderId, newStatus) {
+        const database = await initDB();
+        await database.collection(DB_CONFIG.COLLECTIONS.ORDERS).updateOne(
+            { id: orderId },
+            { "$set": { status: newStatus } }
+        );
+        await this.syncWithDB();
     },
 
     async saveFinancialReport(reportData) {
         const fullReport = { id: \`REP-\${Date.now()}\`, date: new Date().toISOString(), ...reportData };
-        await dbFetch('insertOne', DB_CONFIG.COLLECTIONS.REPORTS, { document: fullReport });
+        const database = await initDB();
+        await database.collection(DB_CONFIG.COLLECTIONS.REPORTS).insertOne(fullReport);
         await this.syncWithDB();
     },
 
@@ -291,7 +296,9 @@ window.AppStore = {
         const prodId = \`prod-\${Date.now()}\`;
         const safeProduct = sanitizeObj(productData);
         safeProduct.id = prodId;
-        await dbFetch('insertOne', DB_CONFIG.COLLECTIONS.PRODUCTS, { document: safeProduct });
+
+        const database = await initDB();
+        await database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).insertOne(safeProduct);
         await this.syncWithDB();
     },
 
@@ -307,15 +314,17 @@ window.AppStore = {
             return obj;
         };
         const safeProduct = sanitizeObj(productData);
-        await dbFetch('updateOne', DB_CONFIG.COLLECTIONS.PRODUCTS, {
-            filter: { id: id },
-            update: { "$set": safeProduct }
-        });
+        const database = await initDB();
+        await database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).updateOne(
+            { id: id },
+            { "$set": safeProduct }
+        );
         await this.syncWithDB();
     },
     
     async deleteProduct(id) {
-        await dbFetch('deleteOne', DB_CONFIG.COLLECTIONS.PRODUCTS, { filter: { id: id } });
+        const database = await initDB();
+        await database.collection(DB_CONFIG.COLLECTIONS.PRODUCTS).deleteOne({ id: id });
         this.state.cart = this.state.cart.filter(c => c.id !== id);
         await this.syncWithDB();
     },
@@ -486,13 +495,11 @@ window.AppStore = {
         document.getElementById('detail-title').textContent = product.name;
         document.getElementById('detail-price').textContent = this.formatMoney(product.price);
         
-        // Use innerHTML for Quill support
-        const descElem = document.getElementById('detail-desc');
+        // Quill Support
+        const descElem = document.getElementById('detail-desc') || document.getElementById('product-description');
         if (descElem) descElem.innerHTML = product.description || "";
         const descSecondary = document.getElementById('detail-desc-secondary');
         if (descSecondary) descSecondary.innerHTML = product.description || "";
-        const productDesc = document.getElementById('product-description');
-        if (productDesc) productDesc.innerHTML = product.description || "";
 
         // Sizes
         const sizesGrid = document.getElementById('detail-sizes-grid');
@@ -506,7 +513,7 @@ window.AppStore = {
             colorsContainer.innerHTML = (product.colors || []).map(c => \`<button data-action="swap-image" data-img-url="\${c.colorImage}" data-color-name="\${c.colorName}" class="w-8 h-8 rounded-full border border-gray-300 hover:scale-110 transition-transform overflow-hidden shadow-sm flex-shrink-0"><img src="\${c.colorImage}" class="w-full h-full object-cover pointer-events-none"></button>\`).join('');
         }
 
-        // Refine Details list
+        // Refine Details
         const refineGrid = document.getElementById('refined-details') || document.getElementById('detail-features-grid');
         if (refineGrid) {
             refineGrid.innerHTML = (product.detailsList || []).map(d => \`<li class="flex flex-col gap-1 border-b border-gray-100 pb-2 mt-2"><span class="font-bold tracking-widest text-[10px] uppercase text-gray-500">\${d.title}</span><span class="text-sm text-black">\${d.value}</span></li>\`).join('');
@@ -540,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.AppStore && window.AppStore.syncWithDB) window.AppStore.syncWithDB();
 });
 
-// Event Delegation for Dynamic Elements
+// Event Delegation
 document.addEventListener('click', (e) => {
     const target = e.target.closest('[data-action]');
     if (!target) return;
