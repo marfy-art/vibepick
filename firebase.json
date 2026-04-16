@@ -4,7 +4,12 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
-    ]
+      "**/node_modules/**",
+      "README.md",
+      "deploy.bat",
+      "CNAME"
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false
   }
 }

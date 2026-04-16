@@ -15,10 +15,15 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+if (typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+} else {
+    console.error('❌ Firebase SDK not loaded. Please ensure script tags are present in the HTML.');
 }
-const db = firebase.database();
+
+const db = typeof firebase !== 'undefined' ? firebase.database() : null;
 
 window.AppStore = {
     state: {
@@ -229,8 +234,9 @@ window.AppStore = {
     },
     
     async addNewProduct(productData) {
-        const prodId = `prod-${Date.now()}`;
-        productData.id = prodId;
+        if (!productData.id) {
+            productData.id = `prod-${Date.now()}`;
+        }
         this.state.products.unshift(productData);
         await db.ref('store_state/products').set(this.state.products);
     },
@@ -266,6 +272,18 @@ window.AppStore = {
         this.updateCartBadges();
         this.renderOrderSummaryIfCheckout();
         if (document.getElementById('detail-title')) this.renderProductDetails();
+        if (document.getElementById('add-category')) this.renderCategoryDropdown();
+    },
+
+    renderCategoryDropdown() {
+        const catSelect = document.getElementById('add-category');
+        if (catSelect) {
+            const currentVal = catSelect.value;
+            catSelect.innerHTML = this.state.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (currentVal && this.state.categories.includes(currentVal)) {
+                catSelect.value = currentVal;
+            }
+        }
     },
 
     updateCartBadges() {

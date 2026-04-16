@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Product - VIBEPICK</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300,0&display=swap" rel="stylesheet">
@@ -161,23 +163,6 @@
                 <div id="colors-container" class="space-y-4"></div>
             </div>
 
-            <div class="border-t border-gray-100 pt-8">
-                <label class="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Video context (Up to 15MB)</label>
-                <div class="flex items-center gap-6">
-                    <div id="video-preview-box" class="w-32 h-32 bg-gray-100 flex items-center justify-center border border-gray-200 overflow-hidden shrink-0 relative">
-                        <span class="material-symbols-outlined text-gray-400">videocam</span>
-                        <video id="video-preview" class="hidden w-full h-full object-cover" muted loop autoplay></video>
-                        <button type="button" id="remove-video" class="hidden absolute top-1 right-1 bg-white/80 p-1 rounded-full shadow-sm hover:bg-white text-red-600 transition-colors">
-                            <span class="material-symbols-outlined text-xs">close</span>
-                        </button>
-                    </div>
-                    <div class="flex-grow">
-                        <input type="file" id="add-video-file" accept="video/*" class="w-full text-sm color-file">
-                        <p class="text-xs text-gray-500 mt-2">Maximum 15MB. MP4/MOV recommended.</p>
-                    </div>
-                </div>
-            </div>
-
             <div class="pt-6">
                 <button type="submit" class="w-full bg-gray-900 text-white font-bold uppercase tracking-widest text-sm py-5 hover:bg-black transition-colors shadow-xl">
                     <span id="save-btn-text">Save Product & Return to Inventory</span>
@@ -207,16 +192,10 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const catSelect = document.getElementById('add-category');
             if (window.AppStore && catSelect) {
-                const renderOptions = () => {
-                    catSelect.innerHTML = window.AppStore.state.categories.map(c => `<option value="${c}">${c}</option>`).join('');
-                };
-                renderOptions();
-
-                document.getElementById('btn-add-category').addEventListener('click', () => {
+                document.getElementById('btn-add-category').addEventListener('click', async () => {
                     const newCat = prompt("Enter new category name:");
                     if (newCat && newCat.trim()) {
-                        window.AppStore.addNewCategory(newCat.trim());
-                        renderOptions();
+                        await window.AppStore.addNewCategory(newCat.trim());
                         catSelect.value = newCat.trim();
                     }
                 });
@@ -354,11 +333,13 @@
             fileInput.addEventListener('change', (evt) => {
                 const f = evt.target.files[0];
                 if (f) {
-                    resizeImageFile(f, 600, 600, (base64) => {
-                        hiddenInput.value = base64;
-                        imgPreview.src = base64;
+                    resizeImageToBlob(f, 600, 600, (blob, previewUrl) => {
+                        div.dataset.blob = 'pending'; // Signal mutation
+                        hiddenInput.value = previewUrl; // Use URL for local preview
+                        imgPreview.src = previewUrl;
                         imgPreview.classList.remove('hidden');
                         icon.classList.add('hidden');
+                        div.pendingBlob = blob; // Store for submit
                     });
                 }
             });
@@ -366,8 +347,8 @@
             container.appendChild(div);
         }
 
-        // Img Downscaler (Canvas)
-        function resizeImageFile(file, maxWidth, maxHeight, callback) {
+        // Img Downscaler (Canvas) - Returns BLOB for Storage upload
+        function resizeImageToBlob(file, maxWidth, maxHeight, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
@@ -393,21 +374,58 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    callback(canvas.toDataURL('image/jpeg', 0.8)); // compressed JPEG
+                    canvas.toBlob((blob) => {
+                        callback(blob, URL.createObjectURL(blob));
+                    }, 'image/jpeg', 0.8);
                 }
                 img.src = e.target.result;
             }
             reader.readAsDataURL(file);
         }
 
+        // ImgBB API Key
+        const IMGBB_API_KEY = '9366f442f884e16af31498343627272c';
+
+        // ImgBB Upload Helper
+        async function uploadToImgBB(blob) {
+            if (!blob) return null;
+            if (typeof blob === 'string' && blob.startsWith('http')) return blob; // Already a URL
+            
+            const formData = new FormData();
+            formData.append('image', blob);
+            
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    return result.data.url;
+                } else {
+                    throw new Error(result.message || 'ImgBB upload failed');
+                }
+            } catch (err) {
+                console.error('ImgBB Upload Error:', err);
+                throw err;
+            }
+        }
+
+        // Global state for blobs to upload
+        window.pendingUploads = {
+            thumbnail: null,
+            gallery: [null, null, null],
+            colors: []
+        };
+
         // Primary Thumbnail Handler
         document.getElementById('add-thumbnail').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                resizeImageFile(file, 1000, 1000, (base64) => {
-                    document.getElementById('add-thumbnail-base64').value = base64;
+                resizeImageToBlob(file, 1000, 1000, (blob, previewUrl) => {
+                    window.pendingUploads.thumbnail = blob;
                     const imgPreview = document.getElementById('thumb-img');
-                    imgPreview.src = base64;
+                    imgPreview.src = previewUrl;
                     imgPreview.classList.remove('hidden');
                 });
             }
@@ -451,15 +469,15 @@
         document.querySelectorAll('.gallery-upload').forEach((input, index) => {
             input.addEventListener('change', (e) => {
                 const file = e.target.files[0];
-                const wrapper = e.target.closest('div.border');
-                const base64Input = wrapper.querySelector('.gallery-base64');
+                const wrapper = e.target.closest('div.bg-gray-50');
                 const imgPreview = wrapper.querySelector('.gallery-img');
                 
                 if (file) {
-                    resizeImageFile(file, 1200, 1200, (base64) => {
-                        base64Input.value = base64;
-                        imgPreview.src = base64;
+                    resizeImageToBlob(file, 1200, 1200, (blob, previewUrl) => {
+                        window.pendingUploads.gallery[index] = blob;
+                        imgPreview.src = previewUrl;
                         imgPreview.classList.remove('hidden');
+                        wrapper.querySelector('.material-symbols-outlined').classList.add('hidden');
                     });
                 }
             });
@@ -479,66 +497,87 @@
         document.getElementById('add-product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnText = document.getElementById('save-btn-text').textContent;
+            
             // Validate thumbnail
-            const thumbBase64 = document.getElementById('add-thumbnail-base64').value;
-            if (!thumbBase64) {
-                alert("Please wait for the primary thumbnail to compress and load.");
+            if (!window.isEditMode && !window.pendingUploads.thumbnail) {
+                alert("Please select a primary thumbnail image.");
                 return;
             }
 
-            // Gather Details List
-            const detailsNodes = document.querySelectorAll('.detail-row');
-            const detailsList = [];
-            detailsNodes.forEach(row => {
-                const t = row.querySelector('.tech-title').value.trim();
-                const v = row.querySelector('.tech-value').value.trim();
-                if (t && v) detailsList.push({ title: t, value: v });
-            });
-
-            // Gather Gallery array
-            const galleryNodes = document.querySelectorAll('.gallery-base64');
-            const galleryImages = [];
-            galleryNodes.forEach(node => {
-                if (node.value) galleryImages.push(node.value);
-            });
-
-            // Gather Colors
-            const colorBlocks = document.querySelectorAll('#colors-container > div');
-            const colorsArray = [];
-            colorBlocks.forEach(blk => {
-                const cName = blk.querySelector('.color-name').value;
-                const cBase64 = blk.querySelector('.color-base64').value;
-                if (cName && cBase64) {
-                    colorsArray.push({ colorName: cName, colorImage: cBase64 });
-                }
-            });
-
-            const sizesRaw = document.getElementById('add-sizes').value;
-            const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-            // Get Quill content
-            const descriptionHtml = quill.root.innerHTML;
-
-            const productId = window.isEditMode ? window.editId : 'vibe_' + Date.now();
-
-            const product = {
-                id: productId,
-                name: document.getElementById('add-name').value.trim(),
-                description: descriptionHtml,
-                price: parseFloat(document.getElementById('add-price').value),
-                stockCount: parseInt(document.getElementById('add-stock').value),
-                category: document.getElementById('add-category').value,
-                images: [thumbBase64],
-                sizes: sizes,
-                videoFile: selectedVideoBlob,
-                colors: colorsArray,
-                detailsList: detailsList,
-                galleryImages: galleryImages
-            };
-
-            console.log('DEBUG - Saving Product Data:', product);
-
             try {
+                // UI Feedback
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('save-btn-text').textContent = "Uploading assets... Please wait.";
+
+                const productId = window.isEditMode ? window.editId : 'vibe_' + Date.now();
+                
+                // 1. Upload Thumbnail
+                let finalThumbnailUrl = document.getElementById('thumb-img').src; 
+                if (window.pendingUploads.thumbnail) {
+                    finalThumbnailUrl = await uploadToImgBB(window.pendingUploads.thumbnail);
+                }
+
+                // 2. Upload Gallery
+                const finalGalleryUrls = [];
+                const galleryPreviews = document.querySelectorAll('.gallery-img');
+                for (let i = 0; i < window.pendingUploads.gallery.length; i++) {
+                    const blob = window.pendingUploads.gallery[i];
+                    if (blob) {
+                        const url = await uploadToImgBB(blob);
+                        finalGalleryUrls.push(url);
+                    } else if (galleryPreviews[i].src && !galleryPreviews[i].classList.contains('hidden')) {
+                        if (galleryPreviews[i].src.startsWith('http')) finalGalleryUrls.push(galleryPreviews[i].src);
+                    }
+                }
+
+                // 3. Upload Colors
+                const colorsArray = [];
+                const colorBlocks = document.querySelectorAll('.color-block');
+                for (let i = 0; i < colorBlocks.length; i++) {
+                    const blk = colorBlocks[i];
+                    const cName = blk.querySelector('.color-name').value;
+                    const blob = blk.pendingBlob;
+                    let cUrl = blk.querySelector('.color-img').src;
+                    
+                    if (blob) {
+                        cUrl = await uploadToImgBB(blob);
+                    }
+                    
+                    if (cName && cUrl) {
+                        colorsArray.push({ colorName: cName, colorImage: cUrl });
+                    }
+                }
+
+                // 4. Video (Removed for ImgBB)
+                let finalVideoUrl = window.isEditMode ? (window.AppStore.state.products.find(p => p.id === window.editId)?.videoUrl || null) : null;
+
+                const sizesRaw = document.getElementById('add-sizes').value;
+                const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+                const descriptionHtml = quill.root.innerHTML;
+
+                const product = {
+                    id: productId,
+                    name: document.getElementById('add-name').value.trim(),
+                    description: descriptionHtml,
+                    price: parseFloat(document.getElementById('add-price').value),
+                    stockCount: parseInt(document.getElementById('add-stock').value),
+                    category: document.getElementById('add-category').value,
+                    images: [finalThumbnailUrl],
+                    sizes: sizes,
+                    videoUrl: finalVideoUrl, 
+                    colors: colorsArray,
+                    detailsList: Array.from(document.querySelectorAll('.detail-row')).map(row => ({
+                        title: row.querySelector('.tech-title').value.trim(),
+                        value: row.querySelector('.tech-value').value.trim()
+                    })).filter(d => d.title && d.value),
+                    galleryImages: finalGalleryUrls
+                };
+
+                document.getElementById('save-btn-text').textContent = "Saving to database...";
+
                 if (window.isEditMode) {
                     await window.AppStore.updateProduct(window.editId, product);
                     alert("Product updated successfully!");
@@ -549,7 +588,11 @@
                 window.location.href = 'admin.html?module=inventory';
             } catch (err) {
                 console.error(err);
-                alert("Failed to save product. If browser storage is completely full, try clearing cache.");
+                alert("Failed to save product: " + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('save-btn-text').textContent = originalBtnText;
             }
         });
     </script>
